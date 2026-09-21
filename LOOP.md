@@ -11,7 +11,7 @@ until that step’s tests pass. Clock: 4–6h per step-day.
 
 - **A** Recode toy DCE+CSE; say why backward liveness and why CSE remaps first
 - **B** 45 min C++ (ownership, UB, STL) that compiles
-- **C** Draw *your* MLIR fusion or tile: IR before / after
+- **C** LLVM DCE on real IR (`llvm-pass`) **and** draw MLIR fuse or tile (`mlir-pass`)
 - **D** One kernel: naive vs better, one number, one sentence why
 
 ---
@@ -26,9 +26,8 @@ If a step fails, repeat it before continuing.
 
 ## Phase 0 — rules (10 min)
 
-1. Read `toy-ir/TASK.md` only. Not `reference/`.
-2. Implementations in `toy-ir` were wiped on purpose. You rebuild them.
-3. Daily: 45 min C++ *in addition* to the step (leetcode-style or a small C++17 IR helper). Log misses in `misses.txt`.
+1. Read `toy-ir/STUDY.cpp`. Not `reference/`.
+2. Daily: 45 min C++ (`cpp/`). Log misses in `misses.txt`.
 
 **Send:** “phase 0 done.”
 
@@ -38,45 +37,29 @@ If a step fails, repeat it before continuing.
 
 The course is real only if it comes out of your fingers.
 
-### Step 1 — IR + dump
+### Step 1–3 — IR + DCE + CSE
 
-Write `toy-ir/ir.h`, `dump.cpp`, `main.cpp` per `TASK.md`.
+Read and run `toy-ir/STUDY.cpp`.
 
-**Done:** `make -C toy-ir run` prints *exactly* the `relu_mac` dump in `TASK.md`.
+**Done:** `make -C toy-ir study && ./toy-ir/study`
 
-**Send:** the dump output.
+**Send:** “STUDY passed” plus, no notes: *why DCE is backward* and *why CSE remaps before delete.*
 
-### Step 2 — DCE
+### Step 4 — cold recode
 
-Write `dce.h` / `dce.cpp`. `store`/`return` are live roots. Walk **backwards**.
+Delete the bodies of `dce` and `cse_const` in `STUDY.cpp`. Recode both in one sitting.
 
-**Done:** `make -C toy-ir test_dce && ./toy-ir/test_dce`
-
-**Send:** “DCE tests passed” plus, in chat, no notes: *why backward, not forward.*
-
-### Step 3 — CSE const
-
-Write `cse.h` / `cse.cpp`. Keep first const per immediate; remap uses.
-
-**Done:** `make -C toy-ir test` (both tests).
-
-**Send:** “CSE tests passed” plus, in chat: *why rewrite operands before deleting.*
-
-### Step 4 — cold recode (the actual interview)
-
-Delete `dce.cpp` and `cse.cpp` only. Recode both in one sitting. No `reference/`, no chat paste-back of old code.
-
-**Done:** `make -C toy-ir test` again.
+**Done:** `make -C toy-ir study && ./toy-ir/study` again.
 
 **Send:** “cold recode passed.”
 
-### Step 5 — LLVM IR aloud
+### Step 5 — real LLVM DCE
 
-Open `llvm-drills/*.ll`. For `sum.ll`, `add.ll`, `abs_O0.ll`, `pick.ll`, `sum_ssa.ll`: say what each instruction does (you can talk to me).
+Last week was **reading** `.ll`. The JD wants **API**. `llvm-pass/` loads `llvm::Module` and deletes trivially dead insts.
 
-**Done:** I quiz 5 random insts and you don’t freeze.
+**Done:** `make -C llvm-pass run` prints `removed 1` and `%dead` is gone.
 
-**Send:** “ready for IR quiz” — then I quiz.
+**Send:** that IR snippet. Then recode `llvm-pass/dce.cpp` from empty.
 
 ### Step 6 — whiteboard DCE
 
@@ -110,43 +93,30 @@ Write (no STL containers as a crutch for the *problem*): a tiny `Value` / `Use` 
 
 ---
 
-## Phase 3 — one MLIR pass you can defend (4–5 days)
+## Phase 3 — MLIR on the JD (1–2 days)
 
-Course compilers are usually LLVM-ish or academic IR. NVIDIA will expect **MLIR vocabulary** (op, dialect, rewrite, lowering).
+### Step 9–10 — run fuse and tile
 
-`mlir-opt` is already at `~/llvm-project/build/bin/mlir-opt`.
+```bash
+make -C mlir-pass fuse
+make -C mlir-pass tile
+```
 
-### Step 9 — toy tutorial, *only* enough to write a pass
+**Done:** you can point at the after-IR (one generic; step-32 loops).
 
-Do the official Toy tutorial through: dialect + one transformation. Stop. Do not finish every chapter.
-
-**Done:** you can define: op, region, rewrite pattern, conversion.
-
-**Send:** four one-liners, those four words.
-
-### Step 10 — fusion *or* tiling (pick one)
-
-Write **your** pass with tests (days 8–11 of the old plan). Prefer fusion if you want “AI compiler” flavor (elementwise chain → one op). Prefer tiling if you want locality talk.
-
-**Done:** `mlir-opt` (or your test binary) shows IR before and after.
-
-**Send:** before/after IR (short) + pass name.
+**Send:** a short before/after (or “fuse+tile ran”).
 
 ### Step 11 — draw it cold
 
-No editor. Draw the IR, the match, the rewrite, one illegal input you’d reject.
+No editor. Fusion or tiling: IR before, match, after, one illegal input you’d reject.
 
 **Done:** I say pass.
 
 **Send:** “ready for pass mock.”
 
-### Step 12 — recode the pass (or toy DCE if MLIR isn’t solid)
+### Step 12 — skip unless the draw fails
 
-Same rule as step 4.
-
-**Done:** tests pass from a blank file.
-
-**Send:** “pass recode passed.”
+Re-run `mlir-pass`, then retry step 11. Do not start the full Toy tutorial.
 
 ---
 
@@ -211,4 +181,4 @@ I run: 45 min C++ + 45 min pass-on-board + 10 min story.
 
 ## Now
 
-**Step 1.** `toy-ir` dump. Do not wait for a better plan.
+**Step 1.** `make -C toy-ir study && ./toy-ir/study`

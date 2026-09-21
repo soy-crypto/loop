@@ -1,6 +1,4 @@
-// Interview drill: who owns the node?
-// Tree owns children via unique_ptr. wipe() drops a subtree; no delete, no leak.
-
+// 04 — unique_ptr owns children. reset() frees the subtree. no delete.
 #include <iostream>
 #include <memory>
 #include <string>
@@ -10,7 +8,6 @@ struct Node {
   std::string name;
   std::unique_ptr<Node> left;
   std::unique_ptr<Node> right;
-
   explicit Node(std::string n) : name(std::move(n)) {}
 };
 

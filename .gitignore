@@ -2,9 +2,9 @@ venv/
 reference/
 build/
 *.o
-toy-ir/dump
-toy-ir/test_dce
-toy-ir/test_cse
+toy-ir/study
+llvm-pass/dce
 cpp/own
+cpp/0[1-8]
 kernels/gemm
 __pycache__/

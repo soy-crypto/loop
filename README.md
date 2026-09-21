@@ -6,27 +6,13 @@ number with the files closed.
 
 | Interview slot | Files | Run |
 |---|---|---|
-| SSA + dump | `toy-ir/ir.h` `dump.cpp` `main.cpp` | `make -C toy-ir run` |
-| DCE (backward) | `toy-ir/dce.cpp` | `make -C toy-ir test` |
-| CSE (remap first) | `toy-ir/cse.cpp` | same |
-| C++ ownership | `cpp/own.cpp` | `make -C cpp run` |
-| MLIR fusion | `mlir-drills/fuse.mlir` | see below |
-| MLIR tile | `mlir-drills/tile.mlir` | see below |
+| SSA DCE + CSE | `toy-ir/STUDY.cpp` | `make -C toy-ir study && ./toy-ir/study` |
+| C++ ownership | `cpp/04_own.cpp` | `make -C cpp 04 && ./cpp/04` |
+| LLVM (JD) | `llvm-pass/dce.cpp` | `make -C llvm-pass run` |
+| MLIR (JD) | `mlir-pass/fuse.mlir` `tile.mlir` | `make -C mlir-pass run` |
 | Kernel number | `kernels/gemm.cu` | `make -C kernels run` |
-| LLVM IR reading | `llvm-drills/*.ll` | read aloud |
-| TVM schedule | `tvm-start/matmul_schedule.py` | that README |
 
-## MLIR
-
-```bash
-OPT=~/llvm-project/build/bin/mlir-opt
-$OPT mlir-drills/fuse.mlir --linalg-fuse-elementwise-ops
-$OPT mlir-drills/tile.mlir --affine-loop-tile="tile-size=32"
-```
-
-Fusion: two `linalg.generic` ops (add, then mul) become one generic that does `addf` then `mulf`. One loop, one write.
-
-Tiling: the `affine.for` to 128 becomes an outer step-32 loop and an inner 32-trip loop.
+`toy-ir` is fake SSA so you can write a pass in 50 lines. `llvm-pass` is the same DCE on `llvm::Instruction`. `mlir-pass` is real `linalg` / `affine` via `mlir-opt`.
 
 ## What to say
 
@@ -40,7 +26,7 @@ Tiling: the `affine.for` to 128 becomes an outer step-32 loop and an inner 32-tr
 
 ## Order if a loop is soon
 
-1. `make -C toy-ir test` then delete `dce.cpp` and `cse.cpp` and rewrite them.
-2. Draw fuse before/after from memory.
+1. Read `toy-ir/STUDY.cpp`, then wipe `dce` / `cse_const` and recode.
+2. `make -C llvm-pass run` then recode `dce.cpp`. Draw `mlir-pass` fuse or tile from memory.
 3. Run `kernels/gemm` and remember the two times plus the one sentence.
-4. `cpp/own.cpp` in under 20 minutes from a blank file.
+4. `cpp/04_own.cpp` in under 20 minutes from a blank file. Daily C++: `cpp/README.md`.
