@@ -13,16 +13,21 @@
 
 using namespace llvm;
 
-static int dce_function(Function &fn) {
+static int dce_function(Function &fn)
+{
   int removed = 0;
   bool changed = true;
-  while (changed) {
+  while (changed)
+  {
     changed = false;
-    for (BasicBlock &bb : fn) {
+    for (BasicBlock &bb : fn)
+    {
       // Backward: a def is only dropped after later uses are gone.
-      for (Instruction *inst = &bb.back(); inst != nullptr;) {
+      for (Instruction *inst = &bb.back(); inst != nullptr;)
+      {
         Instruction *prev = inst->getPrevNode();
-        if (isInstructionTriviallyDead(inst)) {
+        if (isInstructionTriviallyDead(inst))
+        {
           inst->eraseFromParent();
           ++removed;
           changed = true;
@@ -34,8 +39,10 @@ static int dce_function(Function &fn) {
   return removed;
 }
 
-int main(int argc, char **argv) {
-  if (argc != 2) {
+int main(int argc, char **argv)
+{
+  if (argc != 2)
+  {
     errs() << "usage: dce <file.ll>\n";
     return 1;
   }
@@ -43,15 +50,19 @@ int main(int argc, char **argv) {
   LLVMContext ctx;
   SMDiagnostic err;
   auto mod = parseIRFile(argv[1], err, ctx);
-  if (!mod) {
+  if (!mod)
+  {
     err.print("dce", errs());
     return 1;
   }
 
   int removed = 0;
-  for (Function &fn : *mod) {
+  for (Function &fn : *mod)
+  {
     if (!fn.isDeclaration())
+    {
       removed += dce_function(fn);
+    }
   }
   errs() << "removed " << removed << "\n";
   mod->print(outs(), nullptr);

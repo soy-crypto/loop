@@ -5,13 +5,15 @@
 #include <string>
 #include <vector>
 
-struct Inst {
+struct Inst
+{
   std::string op;
   int id;
   std::vector<int> operands;
 };
 
-int main() {
+int main()
+{
   // v1 = const
   // v2 = add v0, v1
   //      ret v2
@@ -20,7 +22,8 @@ int main() {
   insts.push_back({"add", 2, {0, 1}});
   insts.push_back({"ret", -1, {2}});
 
-  for (const Inst &in : insts) {
+  for (const Inst &in : insts)
+  {
     std::cout << in.op << " id=" << in.id << " nops=" << in.operands.size()
               << "\n";
   }

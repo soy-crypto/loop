@@ -2,7 +2,8 @@
 #include <iostream>
 #include <vector>
 
-int main() {
+int main()
+{
   // 1. Dangling pointer into a vector after it grows
   std::vector<int> v = {1};
   int *p = &v[0];

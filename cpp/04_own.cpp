@@ -4,16 +4,23 @@
 #include <string>
 #include <utility>
 
-struct Node {
+struct Node
+{
   std::string name;
   std::unique_ptr<Node> left;
   std::unique_ptr<Node> right;
-  explicit Node(std::string n) : name(std::move(n)) {}
+  explicit Node(std::string n) : name(std::move(n))
+  {
+  }
 };
 
-static void wipe(std::unique_ptr<Node> &n) { n.reset(); }
+static void wipe(std::unique_ptr<Node> &n)
+{
+  n.reset();
+}
 
-int main() {
+int main()
+{
   auto root = std::make_unique<Node>("root");
   root->left = std::make_unique<Node>("L");
   root->right = std::make_unique<Node>("R");

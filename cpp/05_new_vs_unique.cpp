@@ -2,7 +2,8 @@
 #include <iostream>
 #include <memory>
 
-int main() {
+int main()
+{
   int *raw = new int(7);
   std::cout << *raw << "\n";
   delete raw;
