@@ -1,0 +1,10 @@
+venv/
+reference/
+build/
+*.o
+toy-ir/dump
+toy-ir/test_dce
+toy-ir/test_cse
+cpp/own
+kernels/gemm
+__pycache__/
