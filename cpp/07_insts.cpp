@@ -1,4 +1,6 @@
-// 07 — same shape as toy-ir: a list of instructions
+// 07 — a program is a LIST of Inst (not a tree).
+// Each Inst: op name, result id (v1, v2, ...), operand ids it reads.
+// toy-ir/STUDY.cpp is this list plus DCE/CSE. This file only prints the list.
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,6 +12,9 @@ struct Inst {
 };
 
 int main() {
+  // v1 = const
+  // v2 = add v0, v1
+  //      ret v2
   std::vector<Inst> insts;
   insts.push_back({"const", 1, {}});
   insts.push_back({"add", 2, {0, 1}});

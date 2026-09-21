@@ -20,7 +20,7 @@ nav li { margin: 2pt 0; }
 }
 </style></head><body>
 <h1>loop</h1>
-<p class='meta'>25 files from <a href='https://github.com/soy-crypto/loop'>github.com/soy-crypto/loop</a>. Print with Ctrl+P.</p>
+<p class='meta'>26 files from <a href='https://github.com/soy-crypto/loop'>github.com/soy-crypto/loop</a>. Print with Ctrl+P.</p>
 <nav><ol>
 <li><a href='#README-md'>README.md</a></li>
 <li><a href='#LOOP-md'>LOOP.md</a></li>
@@ -47,6 +47,7 @@ nav li { margin: 2pt 0; }
 <li><a href='#cpp-README-md'>cpp/README.md</a></li>
 <li><a href='#kernels-Makefile'>kernels/Makefile</a></li>
 <li><a href='#kernels-gemm-cu'>kernels/gemm.cu</a></li>
+<li><a href='#print-html'>print.html</a></li>
 </ol></nav>
 <h2 id='README-md'>README.md</h2>
 <pre># loop
@@ -719,7 +720,8 @@ func.func @scale(%A: memref&lt;128xf32&gt;, %B: memref&lt;128xf32&gt;) {
 <pre>// 01 — pointer vs reference
 #include &lt;iostream&gt;
 
-static void add_ptr(int *p) {
+static void add_ptr(int *p) 
+{
   if (!p)
     return;
   *p += 1;
@@ -727,7 +729,8 @@ static void add_ptr(int *p) {
 
 static void add_ref(int &amp;r) { r += 1; }
 
-int main() {
+int main() 
+{
   int x = 10;
   add_ptr(&amp;x);
   add_ref(x);
@@ -737,6 +740,7 @@ int main() {
   add_ptr(p); // ok: we checked
   // add_ref(*p); // UB: cannot bind a ref to null
   return 0;
+  
 }
 </pre>
 <h2 id='cpp-02_vector-cpp'>cpp/02_vector.cpp</h2>
@@ -767,12 +771,14 @@ int main() {
 #include &lt;iostream&gt;
 #include &lt;vector&gt;
 
-int main() {
+int main() 
+{
   std::vector&lt;int&gt; v = {1, 2, 3, 4, 5};
 
   // Wrong: save it = v.begin()+2, erase, then use it again → UB.
   // Right: erase returns the next live iterator.
-  for (auto it = v.begin(); it != v.end();) {
+  for (auto it = v.begin(); it != v.end();) 
+  {
     if (*it == 3)
       it = v.erase(it);
     else
@@ -780,7 +786,10 @@ int main() {
   }
 
   for (int x : v)
+  {
     std::cout &lt;&lt; x &lt;&lt; &quot; &quot;;
+  }
+
   std::cout &lt;&lt; &quot;\n&quot;; // 1 2 4 5
   return 0;
 }
@@ -1130,4 +1139,1138 @@ int main() {
   return max_abs &gt; 1e-3 ? 1 : 0;
 }
 </pre>
+<h2 id='print-html'>print.html</h2>
+<pre>&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&#x27;utf-8&#x27;&gt;
+&lt;title&gt;loop — all files&lt;/title&gt;
+&lt;style&gt;
+body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.45;
+       max-width: 7.2in; margin: 0 auto; padding: 0.4in 0; color: #111; }
+h1 { font-size: 20pt; margin: 0 0 4pt; }
+h2 { font-size: 14pt; margin: 22pt 0 6pt; padding-bottom: 3pt;
+     border-bottom: 1.5pt solid #111; page-break-after: avoid; }
+pre { font-family: &quot;DejaVu Sans Mono&quot;, Consolas, monospace; font-size: 8.5pt;
+      line-height: 1.3; background: #f6f6f6; border: 0.5pt solid #ccc;
+      padding: 7pt 9pt; white-space: pre-wrap; word-wrap: break-word; }
+.meta { color: #555; font-size: 10pt; margin-bottom: 14pt; }
+nav { font-size: 10pt; margin-bottom: 18pt; }
+nav a { color: #111; text-decoration: none; }
+nav li { margin: 2pt 0; }
+@media print {
+  nav { display: none; }
+  h2 { page-break-after: avoid; }
+  pre { page-break-inside: avoid; }
+}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+&lt;h1&gt;loop&lt;/h1&gt;
+&lt;p class=&#x27;meta&#x27;&gt;25 files from &lt;a href=&#x27;https://github.com/soy-crypto/loop&#x27;&gt;github.com/soy-crypto/loop&lt;/a&gt;. Print with Ctrl+P.&lt;/p&gt;
+&lt;nav&gt;&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#x27;#README-md&#x27;&gt;README.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#LOOP-md&#x27;&gt;LOOP.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#toy-ir-Makefile&#x27;&gt;toy-ir/Makefile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#toy-ir-STUDY-cpp&#x27;&gt;toy-ir/STUDY.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#toy-ir-TASK-md&#x27;&gt;toy-ir/TASK.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#llvm-pass-Makefile&#x27;&gt;llvm-pass/Makefile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#llvm-pass-TASK-md&#x27;&gt;llvm-pass/TASK.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#llvm-pass-dce-cpp&#x27;&gt;llvm-pass/dce.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#llvm-pass-input-ll&#x27;&gt;llvm-pass/input.ll&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#mlir-pass-Makefile&#x27;&gt;mlir-pass/Makefile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#mlir-pass-TASK-md&#x27;&gt;mlir-pass/TASK.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#mlir-pass-fuse-mlir&#x27;&gt;mlir-pass/fuse.mlir&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#mlir-pass-tile-mlir&#x27;&gt;mlir-pass/tile.mlir&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-01_ptr_ref-cpp&#x27;&gt;cpp/01_ptr_ref.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-02_vector-cpp&#x27;&gt;cpp/02_vector.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-03_erase-cpp&#x27;&gt;cpp/03_erase.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-04_own-cpp&#x27;&gt;cpp/04_own.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-05_new_vs_unique-cpp&#x27;&gt;cpp/05_new_vs_unique.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-06_pass-cpp&#x27;&gt;cpp/06_pass.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-07_insts-cpp&#x27;&gt;cpp/07_insts.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-08_ub-cpp&#x27;&gt;cpp/08_ub.cpp&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-Makefile&#x27;&gt;cpp/Makefile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#cpp-README-md&#x27;&gt;cpp/README.md&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#kernels-Makefile&#x27;&gt;kernels/Makefile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#x27;#kernels-gemm-cu&#x27;&gt;kernels/gemm.cu&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/nav&gt;
+&lt;h2 id=&#x27;README-md&#x27;&gt;README.md&lt;/h2&gt;
+&lt;pre&gt;# loop
+
+Five small, runnable pieces of a compiler-engineer toolkit: an SSA IR with two
+passes, the same DCE written against the real LLVM C++ API, MLIR fusion and
+tiling, a C++ memory-ownership set, and a CUDA GEMM with a measured speedup.
+
+Everything here builds and runs. Each directory is one idea, kept small enough
+to read in a sitting and rewrite from scratch.
+
+## Layout
+
+| Directory | What it is |
+|---|---|
+| `toy-ir/` | A tiny SSA IR (`const`, `add`, `mul`, `relu`, `store`, `return`) plus dead-code elimination and constant CSE, in one file |
+| `llvm-pass/` | The same DCE on `llvm::Module` / `Instruction`, using `isInstructionTriviallyDead` |
+| `mlir-pass/` | `linalg` elementwise fusion and `affine` loop tiling through `mlir-opt` |
+| `cpp/` | Eight programs on pointers vs references, `vector` invalidation, `unique_ptr`, and undefined behavior |
+| `kernels/` | Naive vs 16×16 shared-memory-tiled GEMM, timed with CUDA events |
+
+## Build and run
+
+```bash
+make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study
+make -C llvm-pass run      # needs llvm-config; override with LLVM_CONFIG=...
+make -C mlir-pass run      # needs mlir-opt; override with OPT=...
+make -C cpp run
+make -C kernels run        # needs nvcc + an NVIDIA GPU
+```
+
+## Results
+
+**`toy-ir`** — DCE removes a dead `const 99`, and removes two instructions when
+a `mul` is unused and its `const` dies with it. CSE collapses duplicate
+immediates and rewrites their users.
+
+**`llvm-pass`** — on `input.ll`, `%dead` disappears and the live `add` stays:
+
+```llvm
+define i32 @f(i32 %x) {
+  %y = add i32 %x, 2
+  ret i32 %y
+}
+```
+
+**`mlir-pass`** — `--linalg-fuse-elementwise-ops` turns two `linalg.generic` ops
+into one whose body does `arith.addf` then `arith.mulf`: one loop nest, one
+write to the output tensor. `--affine-loop-tile=&amp;quot;tile-size=32&amp;quot;` splits the
+`affine.for` over 128 into an outer step-32 loop and an inner 32-trip loop.
+
+**`kernels`** — N=1024, RTX A3000 Laptop, mean of 10 launches:
+
+| Kernel | Time |
+|---|---|
+| naive | 3.59 ms |
+| 16×16 tiled | 2.71 ms |
+
+Max elementwise difference against the naive result is 0.
+
+## Notes
+
+**DCE walks backward.** `store` and `return` are live roots and mark their
+operands live. Going forward in a single pass reaches a definition before its
+uses, so it would delete values that are still needed. Backward, the live set is
+already complete by the time each definition is visited, which also handles
+transitively dead chains.
+
+**CSE rewrites operands before deleting.** Operands go through the remap table
+first; only then is a duplicate `const` dropped. Delete first and later
+instructions still name an id that no longer exists.
+
+**The GEMM win is reuse, not arithmetic.** Both kernels do the same N³
+multiply-adds. The naive kernel reloads a row of A and a column of B from global
+memory on every `k`. The tiled kernel stages a 16×16 block of each into shared
+memory and reuses it across the block, so the bottleneck moves off global
+memory bandwidth.
+
+**Ownership.** `unique_ptr` owns each child node; `reset()` frees that subtree,
+and no destructor calls `delete` by hand.
+
+## Practice order
+
+This repo is also interview prep, and reading it is not the same as knowing it.
+The drill is to rewrite each piece from an empty file:
+
+1. Read `toy-ir/STUDY.cpp`, then wipe the bodies of `dce` and `cse_const` and
+   recode both in one sitting.
+2. Recode `llvm-pass/dce.cpp` from `llvm-pass/TASK.md` alone.
+3. Draw the `mlir-pass` fusion or tiling before/after with no editor open.
+4. `cpp/04_own.cpp` from blank in under 20 minutes; daily rotation in
+   `cpp/README.md`.
+5. Re-run the GEMM and say which bottleneck moved, in one sentence.
+
+`LOOP.md` is the longer plan behind that order.
+&lt;/pre&gt;
+&lt;h2 id=&#x27;LOOP-md&#x27;&gt;LOOP.md&lt;/h2&gt;
+&lt;pre&gt;# Loop plan — compilers-background candidate
+
+You already took compilers. SSA, DCE, CSE, CFG are assumed.
+This plan does **not** reteach the course. It turns that into
+**interview production**: C++ under time, a pass you wrote, a GPU number.
+
+You write all code. I review and quiz. Do not open `prep/reference/`
+until that step’s tests pass. Clock: 4–6h per step-day.
+
+**Loop-ready** when you can do A–D with notes shut:
+
+- **A** Recode toy DCE+CSE; say why backward liveness and why CSE remaps first
+- **B** 45 min C++ (ownership, UB, STL) that compiles
+- **C** LLVM DCE on real IR (`llvm-pass`) **and** draw MLIR fuse or tile (`mlir-pass`)
+- **D** One kernel: naive vs better, one number, one sentence why
+
+---
+
+## How to use this
+
+Do the steps **in order**. Do not skip a Done check.
+After each step, message me with the artifact named in **Send**.
+If a step fails, repeat it before continuing.
+
+---
+
+## Phase 0 — rules (10 min)
+
+1. Read `toy-ir/STUDY.cpp`. Not `reference/`.
+2. Daily: 45 min C++ (`cpp/`). Log misses in `misses.txt`.
+
+**Send:** “phase 0 done.”
+
+---
+
+## Phase 1 — prove the course in code (2–3 days)
+
+The course is real only if it comes out of your fingers.
+
+### Step 1–3 — IR + DCE + CSE
+
+Read and run `toy-ir/STUDY.cpp`.
+
+**Done:** `make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study`
+
+**Send:** “STUDY passed” plus, no notes: *why DCE is backward* and *why CSE remaps before delete.*
+
+### Step 4 — cold recode
+
+Delete the bodies of `dce` and `cse_const` in `STUDY.cpp`. Recode both in one sitting.
+
+**Done:** `make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study` again.
+
+**Send:** “cold recode passed.”
+
+### Step 5 — real LLVM DCE
+
+Last week was **reading** `.ll`. The JD wants **API**. `llvm-pass/` loads `llvm::Module` and deletes trivially dead insts.
+
+**Done:** `make -C llvm-pass run` prints `removed 1` and `%dead` is gone.
+
+**Send:** that IR snippet. Then recode `llvm-pass/dce.cpp` from empty.
+
+### Step 6 — whiteboard DCE
+
+I give you a small SSA fragment. You mark live/dead and rewrite the block. No laptop IR.
+
+**Done:** I say pass.
+
+**Send:** “ready for board DCE.”
+
+---
+
+## Phase 2 — C++ is the other half of the loop (overlap with phase 1, then 2–3 days hard)
+
+Compilers course ≠ C++ interview.
+
+### Step 7 — ownership
+
+Write (no STL containers as a crutch for the *problem*): a tiny `Value` / `Use` or graph node with `unique_ptr` children, or a pass that deletes dead `Inst`s from a `vector` without iterator UB.
+
+**Done:** compiles with `-Wall -Wextra`; you can say who owns each pointer.
+
+**Send:** file path + 5-line ownership story.
+
+### Step 8 — timed C++
+
+90 minutes, one problem (I’ll assign when you hit this step): implement and talk.
+
+**Done:** working code + you narrate as you go.
+
+**Send:** when you want the prompt.
+
+---
+
+## Phase 3 — MLIR on the JD (1–2 days)
+
+### Step 9–10 — run fuse and tile
+
+```bash
+make -C mlir-pass fuse
+make -C mlir-pass tile
+```
+
+**Done:** you can point at the after-IR (one generic; step-32 loops).
+
+**Send:** a short before/after (or “fuse+tile ran”).
+
+### Step 11 — draw it cold
+
+No editor. Fusion or tiling: IR before, match, after, one illegal input you’d reject.
+
+**Done:** I say pass.
+
+**Send:** “ready for pass mock.”
+
+### Step 12 — skip unless the draw fails
+
+Re-run `mlir-pass`, then retry step 11. Do not start the full Toy tutorial.
+
+---
+
+## Phase 4 — one GPU number (4–5 days)
+
+AI compiler loop: *graphs in, fast GPU code out.* A course rarely grades this.
+
+### Step 13 — GEMM schedule
+
+TVM TIR or CUDA: default GEMM vs split/reorder/cache (or equivalent tiling).
+
+**Done:** you can print or run both versions.
+
+**Send:** what you changed (3 bullets).
+
+### Step 14 — measure
+
+Time both (or `ncu` if you have a GPU). Two-row table.
+
+**Done:** one sentence: *which bottleneck moved* (not “it’s faster”).
+
+**Send:** the table + the sentence.
+
+### Step 15 — attention (optional if 14 is strong)
+
+Naive vs tiled (or vs PyTorch). One more number.
+
+**Done:** you can say why FlashAttention exists in one minute (IO, not “it’s a paper”).
+
+**Send:** number + the one-minute script.
+
+### Step 16 — 3-minute story
+
+Out loud: problem → IR or schedule change → number.
+
+**Done:** under 3:00, no slides.
+
+**Send:** “ready for story drill.”
+
+---
+
+## Phase 5 — full mock (1 day)
+
+### Step 17
+
+I run: 45 min C++ + 45 min pass-on-board + 10 min story.
+
+**Done:** I score you loop-ready or name the hole. Repeat only the failing phase.
+
+**Send:** “book the mock.”
+
+---
+
+## Explicitly skip until after an onsite, or recruiter asks
+
+- AutoTVM / MetaSchedule week
+- FlashInfer skim
+- “Apply NCG” (already done)
+- Polished multi-project GitHub (push toy-ir + the one pass when they exist)
+
+---
+
+## Now
+
+**Step 1.** `make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study`
+&lt;/pre&gt;
+&lt;h2 id=&#x27;toy-ir-Makefile&#x27;&gt;toy-ir/Makefile&lt;/h2&gt;
+&lt;pre&gt;CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -O0 -g
+
+.PHONY: study run test clean
+study: STUDY.cpp
+	$(CXX) $(CXXFLAGS) STUDY.cpp -o study
+
+run: study
+	./study
+
+test: run
+
+clean:
+	rm -f study
+&lt;/pre&gt;
+&lt;h2 id=&#x27;toy-ir-STUDY-cpp&#x27;&gt;toy-ir/STUDY.cpp&lt;/h2&gt;
+&lt;pre&gt;// One file: a list of instructions, then DCE, then CSE.
+// Run:  make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study
+//
+// Picture (not a tree): a LIST, top to bottom.
+//   v1 = const 99
+//   v2 = const 1
+//   v3 = add v0, v2
+//        return v3
+// Names (v0, v1, ...) can be used more than once = a DAG of values.
+
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cassert&amp;gt;
+#include &amp;lt;cstdint&amp;gt;
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;string&amp;gt;
+#include &amp;lt;unordered_map&amp;gt;
+#include &amp;lt;unordered_set&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+enum class Opcode : uint8_t { Const, Add, Mul, Relu, Load, Store, Return };
+
+// One line of IR.
+struct Inst {
+  Opcode op{};
+  int id = -1;               // name of the result: v1, v2, ...  (-1 = no result)
+  std::vector&amp;lt;int&amp;gt; operands; // names this line reads (e.g. add uses v0 and v2)
+  double imm = 0.0;          // only for Const: the number 99 or 1
+};
+
+// One basic block: just a vector of Inst, in order.
+struct Block {
+  std::string name;
+  std::vector&amp;lt;Inst&amp;gt; insts;
+};
+
+struct Function {
+  std::string name;
+  std::vector&amp;lt;int&amp;gt; args; // v0 is usually the argument, not an Inst
+  std::vector&amp;lt;Block&amp;gt; blocks;
+  int next_id = 0;
+  int fresh() { return next_id++; } // 0, then 1, then 2, ...
+};
+
+// ---------------------------------------------------------------------------
+// DCE = delete lines whose result nobody needs.
+//
+// Paper (first test in main). Start at the BOTTOM. live = names still needed.
+//
+//   return v3          keep (return always stays).  live = {v3}
+//   v3 = add v0, v2    v3 is live -&amp;gt; keep.          live = {v3, v0, v2}
+//   v2 = const 1       v2 is live -&amp;gt; keep.
+//   v1 = const 99      v1 is NOT live -&amp;gt; DELETE.
+//
+// Flip kept lines back to top-to-bottom:  const 1, add, return.
+//
+// Walk BACKWARD so you see &amp;quot;who needs this&amp;quot; before you decide to delete.
+// Walk forward and you meet const 99 first, with live still empty — wrong.
+// store/return are roots: they stay even if they have no id.
+// ---------------------------------------------------------------------------
+int dce(Function &amp;amp;fn) {
+  int removed = 0;
+  for (Block &amp;amp;bb : fn.blocks) {
+    std::unordered_set&amp;lt;int&amp;gt; live; // names the return still needs
+    std::vector&amp;lt;Inst&amp;gt; kept;       // we push bottom-up, reverse at the end
+    for (int i = static_cast&amp;lt;int&amp;gt;(bb.insts.size()) - 1; i &amp;gt;= 0; --i) {
+      const Inst &amp;amp;inst = bb.insts[i];
+      const bool root = inst.op == Opcode::Store || inst.op == Opcode::Return;
+      const bool result_live = inst.id &amp;gt;= 0 &amp;amp;&amp;amp; live.count(inst.id);
+      if (!root &amp;amp;&amp;amp; !result_live) {
+        ++removed; // nobody needs this result
+        continue;
+      }
+      for (int op : inst.operands)
+        live.insert(op); // those names are now needed
+      kept.push_back(inst);
+    }
+    std::reverse(kept.begin(), kept.end());
+    bb.insts = std::move(kept);
+  }
+  return removed;
+}
+
+// ---------------------------------------------------------------------------
+// CSE (const only) = one &amp;quot;const 2&amp;quot;, not two.
+//
+// Paper (third test in main):
+//   v1 = const 2
+//   v2 = const 2          same number -&amp;gt; drop v2, remember v2 means v1
+//   v3 = add v0, v1
+//   v4 = mul v3, v2       rewrite v2 -&amp;gt; v1 BEFORE you would look at mul
+//        return v4
+//
+// remap: old name -&amp;gt; name we kept.  FIRST rewrite operands, THEN drop duplicate.
+// Delete v2 first and mul still says v2 -&amp;gt; broken.
+// ---------------------------------------------------------------------------
+int cse_const(Function &amp;amp;fn) {
+  int replaced = 0;
+  for (Block &amp;amp;bb : fn.blocks) {
+    std::unordered_map&amp;lt;int, int&amp;gt; remap;          // v2 -&amp;gt; v1
+    std::unordered_map&amp;lt;double, int&amp;gt; first_const; // 2.0 -&amp;gt; v1
+    std::vector&amp;lt;Inst&amp;gt; kept;
+    for (Inst inst : bb.insts) {
+      for (int &amp;amp;op : inst.operands) {
+        auto it = remap.find(op);
+        if (it != remap.end())
+          op = it-&amp;gt;second; // use the first copy&amp;#x27;s id
+      }
+      if (inst.op == Opcode::Const) {
+        auto it = first_const.find(inst.imm);
+        if (it != first_const.end()) {
+          remap[inst.id] = it-&amp;gt;second;
+          ++replaced;
+          continue; // do not keep this duplicate const
+        }
+        first_const.emplace(inst.imm, inst.id);
+      }
+      kept.push_back(std::move(inst));
+    }
+    bb.insts = std::move(kept);
+  }
+  return replaced;
+}
+
+int main() {
+  // --- DCE example 1: drop unused const 99 ---
+  // v0=x, v1=99, v2=1, v3=add(v0,v2), return v3
+  {
+    Function fn;
+    int x = fn.fresh();
+    fn.args.push_back(x);
+    Inst dead{Opcode::Const, fn.fresh(), {}, 99.0};
+    Inst c1{Opcode::Const, fn.fresh(), {}, 1.0};
+    Inst add{Opcode::Add, fn.fresh(), {x, c1.id}};
+    Inst ret{Opcode::Return, -1, {add.id}};
+    fn.blocks.push_back({&amp;quot;entry&amp;quot;, {dead, c1, add, ret}});
+    assert(dce(fn) == 1);                      // only const 99 removed
+    assert(fn.blocks[0].insts.size() == 3);    // const 1, add, return
+    assert(fn.blocks[0].insts[0].imm == 1.0);
+  }
+
+  // --- DCE example 2: unused mul, so its const dies too ---
+  // v1=const 5, v2=mul(x,v1) unused, v3=relu(x), return v3
+  {
+    Function fn;
+    int x = fn.fresh();
+    Inst c{Opcode::Const, fn.fresh(), {}, 5.0};
+    Inst mul{Opcode::Mul, fn.fresh(), {x, c.id}};
+    Inst relu{Opcode::Relu, fn.fresh(), {x}};
+    Inst ret{Opcode::Return, -1, {relu.id}};
+    fn.blocks.push_back({&amp;quot;entry&amp;quot;, {c, mul, relu, ret}});
+    assert(dce(fn) == 2); // mul and const 5
+    assert(fn.blocks[0].insts[0].op == Opcode::Relu);
+  }
+
+  // --- CSE: two const 2 -&amp;gt; one; mul must use the first id ---
+  {
+    Function fn;
+    int x = fn.fresh();
+    Inst c1{Opcode::Const, fn.fresh(), {}, 2.0};
+    Inst c2{Opcode::Const, fn.fresh(), {}, 2.0};
+    Inst add{Opcode::Add, fn.fresh(), {x, c1.id}};
+    Inst mul{Opcode::Mul, fn.fresh(), {add.id, c2.id}};
+    Inst ret{Opcode::Return, -1, {mul.id}};
+    fn.blocks.push_back({&amp;quot;entry&amp;quot;, {c1, c2, add, mul, ret}});
+    assert(cse_const(fn) == 1);
+    assert(fn.blocks[0].insts[2].operands[1] == fn.blocks[0].insts[0].id);
+  }
+
+  std::cout &amp;lt;&amp;lt; &amp;quot;STUDY: DCE + CSE ok\n&amp;quot;;
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;toy-ir-TASK-md&#x27;&gt;toy-ir/TASK.md&lt;/h2&gt;
+&lt;pre&gt;# toy-ir
+
+Read `STUDY.cpp` from the top comments, then `dce()`, then `main`’s first test.
+
+- **DCE:** unused lines go away. Walk from `return` upward.
+- **CSE:** two `const 2` become one. Rewrite uses, then delete the copy.
+
+```bash
+make -C toy-ir study &amp;amp;&amp;amp; ./toy-ir/study
+```
+&lt;/pre&gt;
+&lt;h2 id=&#x27;llvm-pass-Makefile&#x27;&gt;llvm-pass/Makefile&lt;/h2&gt;
+&lt;pre&gt;LLVM_CONFIG ?= $(HOME)/llvm-project/build/bin/llvm-config
+CXX := g++
+CXXFLAGS := -std=c++17 $(shell $(LLVM_CONFIG) --cxxflags)
+LIBS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core irreader transformutils)
+
+.PHONY: run clean
+dce: dce.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; $(LIBS) -o $@
+
+run: dce
+	./dce input.ll
+
+clean:
+	rm -f dce
+&lt;/pre&gt;
+&lt;h2 id=&#x27;llvm-pass-TASK-md&#x27;&gt;llvm-pass/TASK.md&lt;/h2&gt;
+&lt;pre&gt;# LLVM pass (the JD skill)
+
+`toy-ir` is fake SSA. This folder is **real LLVM**: `llvm::Module`, `BasicBlock`, `Instruction`.
+
+You run a DCE on `input.ll`. Same idea as `toy-ir/STUDY.cpp`, different API.
+
+## Done
+
+```bash
+make -C llvm-pass run
+```
+
+Prints `removed 1` and IR **without** `%dead`. `%y` and `ret` stay.
+
+## Why this is on the JD
+
+You can say: I loaded LLVM IR, walked each function **backwards**, used `isInstructionTriviallyDead`, erased. That is an LLVM pass, not a toy struct.
+
+## Recode
+
+Delete `dce.cpp`. Rewrite from `TASK.md` only. `make run` must still drop `%dead`.
+&lt;/pre&gt;
+&lt;h2 id=&#x27;llvm-pass-dce-cpp&#x27;&gt;llvm-pass/dce.cpp&lt;/h2&gt;
+&lt;pre&gt;// Real LLVM: load a module, drop trivially dead insts, print IR.
+#include &amp;quot;llvm/IR/Function.h&amp;quot;
+#include &amp;quot;llvm/IR/InstIterator.h&amp;quot;
+#include &amp;quot;llvm/IR/Instructions.h&amp;quot;
+#include &amp;quot;llvm/IR/LLVMContext.h&amp;quot;
+#include &amp;quot;llvm/IR/Module.h&amp;quot;
+#include &amp;quot;llvm/IRReader/IRReader.h&amp;quot;
+#include &amp;quot;llvm/Support/SourceMgr.h&amp;quot;
+#include &amp;quot;llvm/Support/raw_ostream.h&amp;quot;
+#include &amp;quot;llvm/Transforms/Utils/Local.h&amp;quot;
+
+#include &amp;lt;string&amp;gt;
+
+using namespace llvm;
+
+static int dce_function(Function &amp;amp;fn) {
+  int removed = 0;
+  bool changed = true;
+  while (changed) {
+    changed = false;
+    for (BasicBlock &amp;amp;bb : fn) {
+      // Backward: a def is only dropped after later uses are gone.
+      for (Instruction *inst = &amp;amp;bb.back(); inst != nullptr;) {
+        Instruction *prev = inst-&amp;gt;getPrevNode();
+        if (isInstructionTriviallyDead(inst)) {
+          inst-&amp;gt;eraseFromParent();
+          ++removed;
+          changed = true;
+        }
+        inst = prev;
+      }
+    }
+  }
+  return removed;
+}
+
+int main(int argc, char **argv) {
+  if (argc != 2) {
+    errs() &amp;lt;&amp;lt; &amp;quot;usage: dce &amp;lt;file.ll&amp;gt;\n&amp;quot;;
+    return 1;
+  }
+
+  LLVMContext ctx;
+  SMDiagnostic err;
+  auto mod = parseIRFile(argv[1], err, ctx);
+  if (!mod) {
+    err.print(&amp;quot;dce&amp;quot;, errs());
+    return 1;
+  }
+
+  int removed = 0;
+  for (Function &amp;amp;fn : *mod) {
+    if (!fn.isDeclaration())
+      removed += dce_function(fn);
+  }
+  errs() &amp;lt;&amp;lt; &amp;quot;removed &amp;quot; &amp;lt;&amp;lt; removed &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  mod-&amp;gt;print(outs(), nullptr);
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;llvm-pass-input-ll&#x27;&gt;llvm-pass/input.ll&lt;/h2&gt;
+&lt;pre&gt;; Dead add should vanish. Live add + ret stay.
+define i32 @f(i32 %x) {
+  %dead = add i32 %x, 1
+  %y = add i32 %x, 2
+  ret i32 %y
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;mlir-pass-Makefile&#x27;&gt;mlir-pass/Makefile&lt;/h2&gt;
+&lt;pre&gt;OPT ?= $(HOME)/llvm-project/build/bin/mlir-opt
+
+.PHONY: fuse tile run
+fuse:
+	$(OPT) fuse.mlir --linalg-fuse-elementwise-ops
+
+tile:
+	$(OPT) tile.mlir --affine-loop-tile=&amp;quot;tile-size=32&amp;quot;
+
+run: fuse tile
+&lt;/pre&gt;
+&lt;h2 id=&#x27;mlir-pass-TASK-md&#x27;&gt;mlir-pass/TASK.md&lt;/h2&gt;
+&lt;pre&gt;# MLIR (the JD skill)
+
+Real dialects: `linalg`, `arith`, `affine`, `func`. This is not `toy-ir`.
+
+## Done
+
+```bash
+make -C mlir-pass fuse
+make -C mlir-pass tile
+```
+
+**Fusion:** two `linalg.generic` ops become **one** generic (`addf` then `mulf`). One loop, one write.
+
+**Tiling:** `affine.for` 0..128 becomes an outer step-32 loop and an inner 32-trip loop.
+
+## Why this is on the JD
+
+You can say: I ran an MLIR rewrite on linalg (fusion) and affine (tiling). Op + pattern + before/after IR.
+
+## Recode
+
+No editor. Draw fuse **or** tile: IR before, the match, IR after, one input you would reject.
+&lt;/pre&gt;
+&lt;h2 id=&#x27;mlir-pass-fuse-mlir&#x27;&gt;mlir-pass/fuse.mlir&lt;/h2&gt;
+&lt;pre&gt;// Before: two elementwise generics (add, then mul). Two tensor results.
+// After:  mlir-opt --linalg-fuse-elementwise-ops -&amp;gt; one generic: addf then mulf.
+#map = affine_map&amp;lt;(d0) -&amp;gt; (d0)&amp;gt;
+
+func.func @add_mul(%a: tensor&amp;lt;8xf32&amp;gt;, %b: tensor&amp;lt;8xf32&amp;gt;, %c: tensor&amp;lt;8xf32&amp;gt;) -&amp;gt; tensor&amp;lt;8xf32&amp;gt; {
+  %empty = tensor.empty() : tensor&amp;lt;8xf32&amp;gt;
+  %add = linalg.generic {
+      indexing_maps = [#map, #map, #map],
+      iterator_types = [&amp;quot;parallel&amp;quot;]
+    } ins(%a, %b : tensor&amp;lt;8xf32&amp;gt;, tensor&amp;lt;8xf32&amp;gt;)
+      outs(%empty : tensor&amp;lt;8xf32&amp;gt;) {
+    ^bb0(%x: f32, %y: f32, %out: f32):
+      %s = arith.addf %x, %y : f32
+      linalg.yield %s : f32
+  } -&amp;gt; tensor&amp;lt;8xf32&amp;gt;
+  %mul = linalg.generic {
+      indexing_maps = [#map, #map, #map],
+      iterator_types = [&amp;quot;parallel&amp;quot;]
+    } ins(%add, %c : tensor&amp;lt;8xf32&amp;gt;, tensor&amp;lt;8xf32&amp;gt;)
+      outs(%empty : tensor&amp;lt;8xf32&amp;gt;) {
+    ^bb0(%x: f32, %y: f32, %out: f32):
+      %p = arith.mulf %x, %y : f32
+      linalg.yield %p : f32
+  } -&amp;gt; tensor&amp;lt;8xf32&amp;gt;
+  return %mul : tensor&amp;lt;8xf32&amp;gt;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;mlir-pass-tile-mlir&#x27;&gt;mlir-pass/tile.mlir&lt;/h2&gt;
+&lt;pre&gt;// Before: one affine nest over the whole N.
+// After:  mlir-opt --affine-loop-tile=&amp;quot;tile-size=32&amp;quot; splits each loop.
+func.func @scale(%A: memref&amp;lt;128xf32&amp;gt;, %B: memref&amp;lt;128xf32&amp;gt;) {
+  affine.for %i = 0 to 128 {
+    %a = affine.load %A[%i] : memref&amp;lt;128xf32&amp;gt;
+    %c = arith.constant 2.0 : f32
+    %b = arith.mulf %a, %c : f32
+    affine.store %b, %B[%i] : memref&amp;lt;128xf32&amp;gt;
+  }
+  return
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-01_ptr_ref-cpp&#x27;&gt;cpp/01_ptr_ref.cpp&lt;/h2&gt;
+&lt;pre&gt;// 01 — pointer vs reference
+#include &amp;lt;iostream&amp;gt;
+
+static void add_ptr(int *p) {
+  if (!p)
+    return;
+  *p += 1;
+}
+
+static void add_ref(int &amp;amp;r) { r += 1; }
+
+int main() {
+  int x = 10;
+  add_ptr(&amp;amp;x);
+  add_ref(x);
+  std::cout &amp;lt;&amp;lt; x &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;; // 12
+
+  int *p = nullptr;
+  add_ptr(p); // ok: we checked
+  // add_ref(*p); // UB: cannot bind a ref to null
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-02_vector-cpp&#x27;&gt;cpp/02_vector.cpp&lt;/h2&gt;
+&lt;pre&gt;// 02 — vector: grow and read
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+int main() {
+  std::vector&amp;lt;int&amp;gt; v;
+  v.push_back(10);
+  v.push_back(20);
+  v.push_back(30);
+
+  std::cout &amp;lt;&amp;lt; &amp;quot;size=&amp;quot; &amp;lt;&amp;lt; v.size() &amp;lt;&amp;lt; &amp;quot; cap=&amp;quot; &amp;lt;&amp;lt; v.capacity() &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  for (size_t i = 0; i &amp;lt; v.size(); ++i)
+    std::cout &amp;lt;&amp;lt; v[i] &amp;lt;&amp;lt; (i + 1 == v.size() ? &amp;quot;\n&amp;quot; : &amp;quot; &amp;quot;);
+
+  // range-for is also fine; it does not invalidate while you only read
+  int sum = 0;
+  for (int x : v)
+    sum += x;
+  std::cout &amp;lt;&amp;lt; &amp;quot;sum=&amp;quot; &amp;lt;&amp;lt; sum &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-03_erase-cpp&#x27;&gt;cpp/03_erase.cpp&lt;/h2&gt;
+&lt;pre&gt;// 03 — erase the middle without a dangling iterator
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+int main() {
+  std::vector&amp;lt;int&amp;gt; v = {1, 2, 3, 4, 5};
+
+  // Wrong: save it = v.begin()+2, erase, then use it again → UB.
+  // Right: erase returns the next live iterator.
+  for (auto it = v.begin(); it != v.end();) {
+    if (*it == 3)
+      it = v.erase(it);
+    else
+      ++it;
+  }
+
+  for (int x : v)
+    std::cout &amp;lt;&amp;lt; x &amp;lt;&amp;lt; &amp;quot; &amp;quot;;
+  std::cout &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;; // 1 2 4 5
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-04_own-cpp&#x27;&gt;cpp/04_own.cpp&lt;/h2&gt;
+&lt;pre&gt;// 04 — unique_ptr owns children. reset() frees the subtree. no delete.
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;memory&amp;gt;
+#include &amp;lt;string&amp;gt;
+#include &amp;lt;utility&amp;gt;
+
+struct Node {
+  std::string name;
+  std::unique_ptr&amp;lt;Node&amp;gt; left;
+  std::unique_ptr&amp;lt;Node&amp;gt; right;
+  explicit Node(std::string n) : name(std::move(n)) {}
+};
+
+static void wipe(std::unique_ptr&amp;lt;Node&amp;gt; &amp;amp;n) { n.reset(); }
+
+int main() {
+  auto root = std::make_unique&amp;lt;Node&amp;gt;(&amp;quot;root&amp;quot;);
+  root-&amp;gt;left = std::make_unique&amp;lt;Node&amp;gt;(&amp;quot;L&amp;quot;);
+  root-&amp;gt;right = std::make_unique&amp;lt;Node&amp;gt;(&amp;quot;R&amp;quot;);
+  root-&amp;gt;left-&amp;gt;left = std::make_unique&amp;lt;Node&amp;gt;(&amp;quot;LL&amp;quot;);
+
+  wipe(root-&amp;gt;left);
+  std::cout &amp;lt;&amp;lt; root-&amp;gt;name &amp;lt;&amp;lt; &amp;quot; left=&amp;quot; &amp;lt;&amp;lt; (root-&amp;gt;left ? &amp;quot;live&amp;quot; : &amp;quot;dead&amp;quot;)
+            &amp;lt;&amp;lt; &amp;quot; right=&amp;quot; &amp;lt;&amp;lt; root-&amp;gt;right-&amp;gt;name &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-05_new_vs_unique-cpp&#x27;&gt;cpp/05_new_vs_unique.cpp&lt;/h2&gt;
+&lt;pre&gt;// 05 — new/delete vs unique_ptr
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;memory&amp;gt;
+
+int main() {
+  int *raw = new int(7);
+  std::cout &amp;lt;&amp;lt; *raw &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  delete raw;
+  raw = nullptr; // after delete, do not read *raw (UB)
+
+  auto p = std::make_unique&amp;lt;int&amp;gt;(7);
+  std::cout &amp;lt;&amp;lt; *p &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  p.reset(); // frees; no delete
+  // *p  would be UB now
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-06_pass-cpp&#x27;&gt;cpp/06_pass.cpp&lt;/h2&gt;
+&lt;pre&gt;// 06 — how you pass a vector
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+static void by_value(std::vector&amp;lt;int&amp;gt; v) { v.push_back(99); }
+
+static void by_const_ref(const std::vector&amp;lt;int&amp;gt; &amp;amp;v) {
+  std::cout &amp;lt;&amp;lt; &amp;quot;seen &amp;quot; &amp;lt;&amp;lt; v.size() &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  // v.push_back(1); // does not compile
+}
+
+static void by_ref(std::vector&amp;lt;int&amp;gt; &amp;amp;v) { v.push_back(99); }
+
+int main() {
+  std::vector&amp;lt;int&amp;gt; v = {1, 2};
+  by_value(v);
+  std::cout &amp;lt;&amp;lt; &amp;quot;after value &amp;quot; &amp;lt;&amp;lt; v.size() &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;; // still 2
+  by_const_ref(v);
+  by_ref(v);
+  std::cout &amp;lt;&amp;lt; &amp;quot;after ref &amp;quot; &amp;lt;&amp;lt; v.size() &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;; // 3
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-07_insts-cpp&#x27;&gt;cpp/07_insts.cpp&lt;/h2&gt;
+&lt;pre&gt;// 07 — a program is a LIST of Inst (not a tree).
+// Each Inst: op name, result id (v1, v2, ...), operand ids it reads.
+// toy-ir/STUDY.cpp is this list plus DCE/CSE. This file only prints the list.
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;string&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+struct Inst {
+  std::string op;
+  int id;
+  std::vector&amp;lt;int&amp;gt; operands;
+};
+
+int main() {
+  // v1 = const
+  // v2 = add v0, v1
+  //      ret v2
+  std::vector&amp;lt;Inst&amp;gt; insts;
+  insts.push_back({&amp;quot;const&amp;quot;, 1, {}});
+  insts.push_back({&amp;quot;add&amp;quot;, 2, {0, 1}});
+  insts.push_back({&amp;quot;ret&amp;quot;, -1, {2}});
+
+  for (const Inst &amp;amp;in : insts) {
+    std::cout &amp;lt;&amp;lt; in.op &amp;lt;&amp;lt; &amp;quot; id=&amp;quot; &amp;lt;&amp;lt; in.id &amp;lt;&amp;lt; &amp;quot; nops=&amp;quot; &amp;lt;&amp;lt; in.operands.size()
+              &amp;lt;&amp;lt; &amp;quot;\n&amp;quot;;
+  }
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-08_ub-cpp&#x27;&gt;cpp/08_ub.cpp&lt;/h2&gt;
+&lt;pre&gt;// 08 — what is UB (do not uncomment the bad lines)
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+int main() {
+  // 1. Dangling pointer into a vector after it grows
+  std::vector&amp;lt;int&amp;gt; v = {1};
+  int *p = &amp;amp;v[0];
+  (void)p;
+  v.push_back(2); // may move the buffer
+  // std::cout &amp;lt;&amp;lt; *p;  // UB if the buffer moved
+
+  // 2. Use after free
+  int *q = new int(3);
+  delete q;
+  // std::cout &amp;lt;&amp;lt; *q;  // UB
+  q = nullptr;
+
+  // 3. Iterator after erase
+  std::vector&amp;lt;int&amp;gt; w = {1, 2, 3};
+  auto it = w.begin() + 1;
+  w.erase(it);
+  // ++it;  // UB
+  // *it;   // UB
+
+  std::cout &amp;lt;&amp;lt; &amp;quot;compiled; the commented lines would be UB\n&amp;quot;;
+  return 0;
+}
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-Makefile&#x27;&gt;cpp/Makefile&lt;/h2&gt;
+&lt;pre&gt;CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -O0 -g
+
+SRCS := 01_ptr_ref.cpp 02_vector.cpp 03_erase.cpp 04_own.cpp \
+        05_new_vs_unique.cpp 06_pass.cpp 07_insts.cpp 08_ub.cpp
+BINS := 01 02 03 04 05 06 07 08
+
+.PHONY: all run clean
+all: $(BINS)
+
+01: 01_ptr_ref.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+02: 02_vector.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+03: 03_erase.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+04: 04_own.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+05: 05_new_vs_unique.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+06: 06_pass.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+07: 07_insts.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+08: 08_ub.cpp
+	$(CXX) $(CXXFLAGS) $&amp;lt; -o $@
+
+run: all
+	./01 &amp;amp;&amp;amp; ./02 &amp;amp;&amp;amp; ./03 &amp;amp;&amp;amp; ./04 &amp;amp;&amp;amp; ./05 &amp;amp;&amp;amp; ./06 &amp;amp;&amp;amp; ./07 &amp;amp;&amp;amp; ./08
+
+clean:
+	rm -f $(BINS) own
+&lt;/pre&gt;
+&lt;h2 id=&#x27;cpp-README-md&#x27;&gt;cpp/README.md&lt;/h2&gt;
+&lt;pre&gt;# C++ for this loop
+
+This is the whole C++ set. Not a language course. Compiler interviews
+here grade **ownership, references, `vector`, no UB**.
+
+Each `0N_*.cpp` is a finished program. **Today:** `make 01 &amp;amp;&amp;amp; ./01` and
+read it. **Tomorrow:** rewrite that file from a blank buffer, then compile.
+
+```bash
+cd cpp
+make 01 &amp;amp;&amp;amp; ./01
+```
+
+## Order (one file per day, 45 min)
+
+| File | Topic | You must say |
+|---|---|---|
+| `01_ptr_ref.cpp` | `int*` vs `int&amp;amp;` | pointer can be null; ref is an alias |
+| `02_vector.cpp` | `push_back`, index loop | size vs capacity |
+| `03_erase.cpp` | `erase` without dangling iterator | after erase, old iterator is dead |
+| `04_own.cpp` | `unique_ptr` tree | who frees the node |
+| `05_new_vs_unique.cpp` | `new`/`delete` vs `unique_ptr` | double-free and leak |
+| `06_pass.cpp` | by value / `const &amp;amp;` / `&amp;amp;` | copy vs mutate caller |
+| `07_insts.cpp` | toy-IR shaped `vector&amp;lt;Inst&amp;gt;` | same as `toy-ir` |
+| `08_ub.cpp` | dangling pointer, use-after-free | what is illegal |
+
+Then recode `04_own.cpp` in **20 min**. Then ask for a timed 45-min problem.
+
+## Rules
+
+- `-Wall -Wextra`; fix warnings.
+- After it runs, speak: who owns each pointer, what would be UB.
+- One line in `misses.txt` if you stall.
+- No LeetCode until 01–06 are easy from memory.
+
+Skip templates, inheritance, threads, exceptions, C++20 ranges.
+&lt;/pre&gt;
+&lt;h2 id=&#x27;kernels-Makefile&#x27;&gt;kernels/Makefile&lt;/h2&gt;
+&lt;pre&gt;NVCC := nvcc
+NVCCFLAGS := -O2 -std=c++17
+
+.PHONY: run
+run: gemm
+	./gemm
+
+gemm: gemm.cu
+	$(NVCC) $(NVCCFLAGS) gemm.cu -o gemm
+&lt;/pre&gt;
+&lt;h2 id=&#x27;kernels-gemm-cu&#x27;&gt;kernels/gemm.cu&lt;/h2&gt;
+&lt;pre&gt;// Naive GEMM vs 16x16 shared-memory tile.
+// Story: same math, fewer global loads of A/B. Print both times.
+
+#include &amp;lt;cuda_runtime.h&amp;gt;
+#include &amp;lt;cmath&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstdlib&amp;gt;
+#include &amp;lt;vector&amp;gt;
+
+static constexpr int TILE = 16;
+
+#define CHECK(call)                                                            \
+  do {                                                                         \
+    cudaError_t err = (call);                                                  \
+    if (err != cudaSuccess) {                                                  \
+      fprintf(stderr, &amp;quot;%s:%d %s\n&amp;quot;, __FILE__, __LINE__,                        \
+              cudaGetErrorString(err));                                       \
+      exit(1);                                                                 \
+    }                                                                          \
+  } while (0)
+
+__global__ void gemm_naive(const float *A, const float *B, float *C, int N) {
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  if (row &amp;gt;= N || col &amp;gt;= N)
+    return;
+  float acc = 0.f;
+  for (int k = 0; k &amp;lt; N; ++k)
+    acc += A[row * N + k] * B[k * N + col];
+  C[row * N + col] = acc;
+}
+
+__global__ void gemm_tiled(const float *A, const float *B, float *C, int N) {
+  __shared__ float As[TILE][TILE];
+  __shared__ float Bs[TILE][TILE];
+  int row = blockIdx.y * TILE + threadIdx.y;
+  int col = blockIdx.x * TILE + threadIdx.x;
+  float acc = 0.f;
+  for (int t = 0; t &amp;lt; N; t += TILE) {
+    int a_col = t + threadIdx.x;
+    int b_row = t + threadIdx.y;
+    As[threadIdx.y][threadIdx.x] =
+        (row &amp;lt; N &amp;amp;&amp;amp; a_col &amp;lt; N) ? A[row * N + a_col] : 0.f;
+    Bs[threadIdx.y][threadIdx.x] =
+        (b_row &amp;lt; N &amp;amp;&amp;amp; col &amp;lt; N) ? B[b_row * N + col] : 0.f;
+    __syncthreads();
+    for (int k = 0; k &amp;lt; TILE; ++k)
+      acc += As[threadIdx.y][k] * Bs[k][threadIdx.x];
+    __syncthreads();
+  }
+  if (row &amp;lt; N &amp;amp;&amp;amp; col &amp;lt; N)
+    C[row * N + col] = acc;
+}
+
+static float time_ms(void (*launch)(const float *, const float *, float *, int,
+                                    int),
+                     const float *A, const float *B, float *C, int N, int grid) {
+  launch(A, B, C, N, grid);
+  CHECK(cudaDeviceSynchronize());
+  cudaEvent_t start, stop;
+  CHECK(cudaEventCreate(&amp;amp;start));
+  CHECK(cudaEventCreate(&amp;amp;stop));
+  CHECK(cudaEventRecord(start));
+  for (int i = 0; i &amp;lt; 10; ++i)
+    launch(A, B, C, N, grid);
+  CHECK(cudaEventRecord(stop));
+  CHECK(cudaEventSynchronize(stop));
+  float ms = 0.f;
+  CHECK(cudaEventElapsedTime(&amp;amp;ms, start, stop));
+  CHECK(cudaEventDestroy(start));
+  CHECK(cudaEventDestroy(stop));
+  return ms / 10.f;
+}
+
+static void launch_naive(const float *A, const float *B, float *C, int N,
+                         int) {
+  dim3 block(TILE, TILE);
+  dim3 grid((N + TILE - 1) / TILE, (N + TILE - 1) / TILE);
+  gemm_naive&amp;lt;&amp;lt;&amp;lt;grid, block&amp;gt;&amp;gt;&amp;gt;(A, B, C, N);
+}
+
+static void launch_tiled(const float *A, const float *B, float *C, int N,
+                         int) {
+  dim3 block(TILE, TILE);
+  dim3 grid((N + TILE - 1) / TILE, (N + TILE - 1) / TILE);
+  gemm_tiled&amp;lt;&amp;lt;&amp;lt;grid, block&amp;gt;&amp;gt;&amp;gt;(A, B, C, N);
+}
+
+int main() {
+  const int N = 1024;
+  std::vector&amp;lt;float&amp;gt; hA(N * N), hB(N * N), hC(N * N), hRef(N * N);
+  for (int i = 0; i &amp;lt; N * N; ++i) {
+    hA[i] = 0.001f * (i % 17);
+    hB[i] = 0.001f * (i % 13);
+  }
+  float *A, *B, *C;
+  CHECK(cudaMalloc(&amp;amp;A, hA.size() * sizeof(float)));
+  CHECK(cudaMalloc(&amp;amp;B, hB.size() * sizeof(float)));
+  CHECK(cudaMalloc(&amp;amp;C, hC.size() * sizeof(float)));
+  CHECK(cudaMemcpy(A, hA.data(), hA.size() * sizeof(float),
+                    cudaMemcpyHostToDevice));
+  CHECK(cudaMemcpy(B, hB.data(), hB.size() * sizeof(float),
+                    cudaMemcpyHostToDevice));
+
+  launch_naive(A, B, C, N, 0);
+  CHECK(cudaDeviceSynchronize());
+  CHECK(cudaMemcpy(hRef.data(), C, hRef.size() * sizeof(float),
+                    cudaMemcpyDeviceToHost));
+  launch_tiled(A, B, C, N, 0);
+  CHECK(cudaDeviceSynchronize());
+  CHECK(cudaMemcpy(hC.data(), C, hC.size() * sizeof(float),
+                    cudaMemcpyDeviceToHost));
+  double max_abs = 0;
+  for (int i = 0; i &amp;lt; N * N; ++i)
+    max_abs = std::max(max_abs, (double)std::fabs(hC[i] - hRef[i]));
+
+  float naive = time_ms(launch_naive, A, B, C, N, 0);
+  float tiled = time_ms(launch_tiled, A, B, C, N, 0);
+  printf(&amp;quot;N=%d tile=%d\n&amp;quot;, N, TILE);
+  printf(&amp;quot;naive  %.3f ms\n&amp;quot;, naive);
+  printf(&amp;quot;tiled  %.3f ms\n&amp;quot;, tiled);
+  printf(&amp;quot;max |tiled-naive| %.3g\n&amp;quot;, max_abs);
+  printf(&amp;quot;why: each A/B element is reused from shared memory inside the tile &amp;quot;
+         &amp;quot;instead of reloaded from global memory on every k\n&amp;quot;);
+
+  CHECK(cudaFree(A));
+  CHECK(cudaFree(B));
+  CHECK(cudaFree(C));
+  return max_abs &amp;gt; 1e-3 ? 1 : 0;
+}
+&lt;/pre&gt;
+&lt;/body&gt;&lt;/html&gt;</pre>
 </body></html>
