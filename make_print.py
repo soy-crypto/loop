@@ -10,7 +10,7 @@ OUT = ROOT / "print.html"
 
 # Order the sections so the page reads like the study plan, not like `ls`.
 ORDER = ["README.md", "LOOP.md", "toy-ir/", "llvm-pass/", "mlir-pass/", "cpp/", "kernels/"]
-SKIP = {".gitignore", "make_print.py"}
+SKIP = {".gitignore", "make_print.py", OUT.name}
 
 CSS = """
 body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.45;
