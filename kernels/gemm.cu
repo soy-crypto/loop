@@ -65,8 +65,7 @@ __global__ void gemm_tiled(const float *A, const float *B, float *C, int N)
   }
 }
 
-static float time_ms(void (*launch)(const float *, const float *, float *, int,
-                                    int),
+static float time_ms(void (*launch)(const float *, const float *, float *, int, int), 
                      const float *A, const float *B, float *C, int N, int grid)
 {
   launch(A, B, C, N, grid);
