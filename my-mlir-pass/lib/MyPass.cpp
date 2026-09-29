@@ -17,13 +17,25 @@ namespace
 
         LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
         {
-            auto lhs = op.getLhs();
-            auto rhs = op.getRhs();
-            
             llvm::outs() << "Found addi\n";
             
+            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOP>();
+            auto rhs = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
+            if(lhs != null && lhs.value() == 0)
+            {
+                rewriter.replaceOp(op, op.getLhs());
+                return success();
+            }
+
+            if(rhs != null && rhs.value() == 0)
+            {
+                rewriter.replaceOp(op, op.getRhs());
+                return success();
+            }
+
             return failure();
         }
+
     };
 
     //Pass
@@ -74,4 +86,5 @@ mlirGetPassPluginInfo()
             registerMyPass();
         }
     };
+
 }
