@@ -22,5 +22,16 @@ module
         return %0 : i32
     }
 
+    func.func @test4(%arg0 : i32) -> i32
+    {
+        %c0 = arith.constant 0 : i32
+        %0 = arith.muli %arg0, %c0 : i32
+        return %0 : i32
+    }
+
+    func.func @test5(%arg0 : i32) -> i32
+    {
+        
+    }
 
 }

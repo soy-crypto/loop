@@ -95,6 +95,37 @@ namespace
 
     };//
 
+
+    // x * 0 -> 0
+    struct MulZeroPattern : OpRewritePattern<arith::AddIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
+        {
+            //get left oprand and right oprand
+            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOp>();
+            auto rhs = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
+            
+            //check
+            if(lhs != nullptr && lhs.value() == 0)
+            {
+                rewriter.replaceOp(op, op.getRhs());
+                return success();
+            }
+
+            if(rhs != nullptr && rhs.value() == 0)
+            {
+                rewriter.replaceOp(op, op.getLhs());
+                return success();
+            }
+
+            //return
+            return failure();
+        }
+
+    }; // *0 pattern
+
     //Pass
     struct MyPass : PassWrapper<MyPass, OperationPass<ModuleOp>>
     {
@@ -113,7 +144,7 @@ namespace
         void runOnOperation() override
         {
             RewritePatternSet patterns(&getContext());
-            patterns.add<AddZeroPattern, MulOnePattern, ConstantFoldPattern>(&getContext());
+            patterns.add<AddZeroPattern, MulOnePattern, ConstantFoldPattern, MulZeroPattern>(&getContext());
             if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
             {
                 signalPassFailure();
