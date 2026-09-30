@@ -10,7 +10,8 @@ using namespace mlir;
 
 namespace
 {
-    //Pattern
+    //Patterns
+    // x + 0 -> x
     struct AddZeroPattern : public OpRewritePattern<arith::AddIOp>
     {
         using OpRewritePattern:: OpRewritePattern;
@@ -19,17 +20,17 @@ namespace
         {
             llvm::outs() << "Found addi\n";
             
-            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOP>();
+            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOp>();
             auto rhs = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
-            if(lhs != null && lhs.value() == 0)
+            if(lhs != nullptr && lhs.value() == 0)
             {
-                rewriter.replaceOp(op, op.getLhs());
+                rewriter.replaceOp(op, op.getRhs());
                 return success();
             }
 
-            if(rhs != null && rhs.value() == 0)
+            if(rhs != nullptr && rhs.value() == 0)
             {
-                rewriter.replaceOp(op, op.getRhs());
+                rewriter.replaceOp(op, op.getLhs());
                 return success();
             }
 
@@ -38,10 +39,66 @@ namespace
 
     };
 
-    //Pass
-    struct AddZeroPass : PassWrapper<AddZeroPass, OperationPass<ModuleOp>>
+    
+    // x * 1 -> x
+    struct MulOnePattern : OpRewritePattern<arith::MulIOp>
     {
-        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(AddZeroPass);
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
+        {
+            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOp>();
+            auto rhs = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
+
+            if(lhs != nullptr && lhs.value() == 1)
+            {
+                rewriter.replaceOp(op, op.getRhs());
+                return success();
+            }
+
+            if(rhs != nullptr && rhs.value() == 1)
+            {
+                rewriter.replaceOp(op, op.getLhs());
+                return success();
+            }
+
+            //return
+            return failure();
+        }//logcial
+
+    };
+
+
+    // const + const -> const
+    struct ConstantFoldPattern : OpRewritePattern<arith::AddIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
+        {
+            auto lhs = op.getLhs().getDefiningOp<arith::ConstantIntOp>();
+            auto rhs = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
+
+            if(lhs != nullptr && rhs != nullptr)
+            {
+                int64_t result = lhs.value() + rhs.value();
+                auto newConst = rewriter.create<arith::ConstantIntOp>(op.getLoc(), result, 32);
+                rewriter.replaceOp(op, newConst);
+                return success();
+            }
+            else
+            {
+                return failure();
+            }
+
+        }//
+
+    };//
+
+    //Pass
+    struct MyPass : PassWrapper<MyPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(MyPass);
 
         StringRef getArgument() const override
         {
@@ -50,13 +107,13 @@ namespace
 
         StringRef getDescription() const override
         {
-            return "My first MLIR pass";
+            return "Simple MLIR optimizaiton pass";
         }
         
         void runOnOperation() override
         {
             RewritePatternSet patterns(&getContext());
-            patterns.add<AddZeroPattern>(&getContext());
+            patterns.add<AddZeroPattern, MulOnePattern, ConstantFoldPattern>(&getContext());
             if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
             {
                 signalPassFailure();
@@ -66,25 +123,11 @@ namespace
 
     };
 
-    //Register
-    void registerMyPass()
-    {
-        PassRegistration<AddZeroPass>();
-    }
+   
+}//namespace
 
-}
-
-extern "C" ::mlir::PassPluginLibraryInfo
-mlirGetPassPluginInfo()
+//Register
+void registerMyPass()
 {
-    return {
-        MLIR_PLUGIN_API_VERSION,
-        "MyMLIRPass",
-        "0.1",
-        []()
-        {
-            registerMyPass();
-        }
-    };
-
+    PassRegistration<MyPass>();
 }
