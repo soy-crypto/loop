@@ -40,8 +40,4 @@ add_mlir_library(MyMLIRPass
 target_compile_features(MyMLIRPass PRIVATE cxx_std_17)
 
 add_executable(my-opt tools/main.cpp)
-target_link_libraries(my-opt PRIVATE
-  MyMLIRPass
-  MLIROptLib
-  MLIRFuncDialect
-)
+target_link_libraries(my-opt PRIVATE MyMLIRPass MLIROptLib MLIRFuncDialect)
