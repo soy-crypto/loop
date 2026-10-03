@@ -97,7 +97,6 @@ namespace
 
     };//
 
-
     // x * 0 -> 0
     struct MulZeroPattern : OpRewritePattern<arith::MulIOp>
     {
@@ -214,6 +213,49 @@ namespace
     };
 
     //pass2
+    struct PrintOpsPass : PassWrapper<PrintOpsPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(PrintOpsPass);
+
+        StringRef getArgument() const override
+        {
+            return "print-ops";
+        }
+
+        void runOnOperation() override
+        {
+            getOperation()->walk([](arith::AddIOp op) { llvm::outs() << "ADD: " << op << "\n"; });
+            getOperation()->walk([](arith::MulIOp op) { llvm::outs() << "MUL: " << op << "\n"; });
+        }
+
+    };
+
+    //pass3
+    struct FunctionStatsPass : PassWrapper<FunctionStatsPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(FunctionStatsPass);
+
+        StringRef getArgument() const override
+        {
+            return "func-stats";
+        }
+
+        StringRef getDescription() override
+        {
+            return "Print function statistics";
+        }
+
+        void runOnOperation() override
+        {
+            getOperation()->walk([](func::FuncOp func)
+            {
+                int opCount = 0;
+                func.walk([&](Operation *op) { opCount++;});
+            });
+
+        }
+
+    }
 
    
 }//namespace
@@ -222,4 +264,5 @@ namespace
 void registerMyPass()
 {
     PassRegistration<MyPass>();
+    PassRegistration<PrintOpsPass>();
 }
