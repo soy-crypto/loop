@@ -361,6 +361,7 @@ namespace
     struct LICMPass : PassWrapper<LICMPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LICMPass);
+
         StringRef getArgument() const override
         {
             return "licm";
@@ -373,6 +374,9 @@ namespace
 
         void runOnOperation() override
         {
+            //Disply start
+            llvm::outs() << "-----LICM start -----" << "\n";
+
             //travers all functions
             getOperation()->walk([&](func::FuncOp func)
             {
@@ -383,31 +387,47 @@ namespace
                 func.walk([&](scf::ForOp loop)
                 {
                     //current loop
-                    bool found = false;
+                    bool localFound = false;
 
                     //traverse ops in the loop
-                    loop.getBody()->walk([&](arith::AddIOp op)
+                    SmallVector<Operation* > movedOps;
+                    loop.getBody()->walk([&](Operation *op)
                     {
                         //current op
-                        bool localFound = true;
-                        for(Value operand : op.getOperands())
-                        {
-                           auto *defOp = operand.getDefiningOp();
-                           localFound &= defOp && loop->isAncestor(defOp) ? false : true; 
-                        }//for
+                        bool found = true;
 
-                        if(localFound == true)
+                        //check
+                        if(isa<arith::AddIOp>(op) || isa<arith::MulIOp>(op))
                         {
-                            op->moveBefore(loop);
-                        }
+                            for(Value operand : op->getOperands())
+                            {
+                            auto *defOp = operand.getDefiningOp();
+                            found &= defOp && loop->isAncestor(defOp) ? false : true; 
+                            }//for
 
-                        //update invariant
-                        found |= localFound;
+                            if(found == true)
+                            {
+                                movedOps.push_back(op);
+                            }
+
+                        }//if
+                        
+                        //update localFound
+                        localFound |= found;
 
                     });
+
+                    if(localFound == true)
+                    {
+                        for(Operation *op : movedOps)
+                        {
+                            op->moveBefore(loop);
+                        }//
+
+                    }//if
                     
                     //update global invariant
-                    globalFound |= found;
+                    globalFound |= localFound;
                     
                 });
 
@@ -418,6 +438,13 @@ namespace
                 }
 
             });
+
+            
+            //Display end
+            llvm::outs() << "-----LICM end -----" << "\n\n";
+
+            //return
+            return;
 
         }//void
 
