@@ -39,7 +39,6 @@ namespace
         }
 
     };
-
     
     // x * 1 -> x
     struct MulOnePattern : OpRewritePattern<arith::MulIOp>
@@ -69,7 +68,6 @@ namespace
         }//logcial
 
     };
-
 
     // const + const -> const
     struct ConstantFoldPattern : OpRewritePattern<arith::AddIOp>
@@ -182,7 +180,6 @@ namespace
         }
 
     };
-
 
     //Pass
     //pass1
@@ -360,6 +357,72 @@ namespace
 
     };
 
+    //pass - licm
+    struct LICMPass : PassWrapper<LICMPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LICMPass);
+        StringRef getArgument() const override
+        {
+            return "licm";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "licm code elimination!";
+        }
+
+        void runOnOperation() override
+        {
+            //travers all functions
+            getOperation()->walk([&](func::FuncOp func)
+            {
+                //init
+                bool global_Invariant = false;
+                
+                //traverse all loops
+                func.walk([&](scf::ForOp loop)
+                {
+                    //current loop
+                    bool invariant = false;
+
+                    //traverse ops in the loop
+                    loop.getBody()->walk([&](arith::AddIOp op)
+                    {
+                        //current op
+                        bool localFlag = true;
+                        for(Value operand : op.getOperands())
+                        {
+                           auto *defOp = operand.getDefiningOp();
+                           localFlag |= defOp && loop->isAncestor(defOp) ? false : true; 
+                        }//for
+
+                        if(localFlag == true)
+                        {
+                            op->moveBefore(loop);
+                        }
+
+                        //update invariant
+                        invariant |= localFlag;
+
+                    });
+                    
+                    //update global invariant
+                    global_Invariant |= invariant;
+                    
+                });
+
+                //output
+                if(global_Invariant == true)
+                {
+                    llvm::outs() << "LIVMed function" << func << "\n";
+                }
+
+            });
+
+        }//void
+
+    };
+
    
 }//namespace
 
@@ -369,4 +432,5 @@ void registerMyPass()
     PassRegistration<MyPass>();
     PassRegistration<PrintOpsPass>();
     PassRegistration<FunctionStatsPass>();
+    PassRegistration<LICMPass>();
 }
