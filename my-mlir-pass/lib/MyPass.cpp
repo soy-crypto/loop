@@ -390,19 +390,31 @@ namespace
                     bool localFound = false;
 
                     //traverse ops in the loop
-                    SmallVector<Operation* > movedOps;
+                    SmallVector<Operation*> movedOps;
                     loop.getBody()->walk([&](Operation *op)
                     {
-                        //current op
+                        //check current op
                         bool found = true;
-
-                        //check
-                        if(isa<arith::AddIOp>(op) || isa<arith::MulIOp>(op))
+                        if(isa<arith::ConstantOp>(op))
+                        {
+                            found = true;
+                            movedOps.push_back(op);
+                        }
+                        else if(!isa<scf::YieldOp>(op) && !isa<func::ReturnOp>(op))
                         {
                             for(Value operand : op->getOperands())
                             {
-                            auto *defOp = operand.getDefiningOp();
-                            found &= defOp && loop->isAncestor(defOp) ? false : true; 
+                                if(operand != loop.getInductionVar())
+                                {
+                                    auto *defOp = operand.getDefiningOp();
+                                    found &= defOp && loop->isAncestor(defOp) ? false : true; 
+                                }
+                                else
+                                {
+                                    found = false;
+                                    break;
+                                }
+                                
                             }//for
 
                             if(found == true)
@@ -410,14 +422,14 @@ namespace
                                 movedOps.push_back(op);
                             }
 
-                        }//if
-                        
+                        }
+
                         //update localFound
                         localFound |= found;
 
                     });
 
-                    if(localFound == true)
+                    if(!movedOps.empty())
                     {
                         for(Operation *op : movedOps)
                         {
