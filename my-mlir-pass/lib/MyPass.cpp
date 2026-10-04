@@ -377,42 +377,42 @@ namespace
             getOperation()->walk([&](func::FuncOp func)
             {
                 //init
-                bool global_Invariant = false;
+                bool globalFound = false;
                 
                 //traverse all loops
                 func.walk([&](scf::ForOp loop)
                 {
                     //current loop
-                    bool invariant = false;
+                    bool found = false;
 
                     //traverse ops in the loop
                     loop.getBody()->walk([&](arith::AddIOp op)
                     {
                         //current op
-                        bool localFlag = true;
+                        bool localFound = true;
                         for(Value operand : op.getOperands())
                         {
                            auto *defOp = operand.getDefiningOp();
-                           localFlag |= defOp && loop->isAncestor(defOp) ? false : true; 
+                           localFound &= defOp && loop->isAncestor(defOp) ? false : true; 
                         }//for
 
-                        if(localFlag == true)
+                        if(localFound == true)
                         {
                             op->moveBefore(loop);
                         }
 
                         //update invariant
-                        invariant |= localFlag;
+                        found |= localFound;
 
                     });
                     
                     //update global invariant
-                    global_Invariant |= invariant;
+                    globalFound |= found;
                     
                 });
 
                 //output
-                if(global_Invariant == true)
+                if(globalFound == true)
                 {
                     llvm::outs() << "LIVMed function" << func << "\n";
                 }
