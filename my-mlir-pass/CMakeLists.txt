@@ -35,6 +35,7 @@ add_mlir_library(MyMLIRPass
     MLIRRewrite
     MLIRTransforms
     MLIRArithDialect
+    MLIRSCFDialect
 )
 
 target_compile_features(MyMLIRPass PRIVATE cxx_std_17)

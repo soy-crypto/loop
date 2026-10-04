@@ -1,10 +1,11 @@
-#include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassRegistry.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Tools/Plugins/PassPlugin.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 
 using namespace mlir;
 
@@ -240,7 +241,7 @@ namespace
             return "func-stats";
         }
 
-        StringRef getDescription() override
+        StringRef getDescription() const override
         {
             return "Print function statistics";
         }
@@ -249,13 +250,115 @@ namespace
         {
             getOperation()->walk([](func::FuncOp func)
             {
-                int opCount = 0;
-                func.walk([&](Operation *op) { opCount++;});
+                //show func
+                llvm::outs() << "-----" << func.getName() << "-----\n"; 
+                //Compute
+                llvm::StringMap<int> freqMap;
+                func.walk([&](Operation *op)
+                {
+                    if(!isa<func::FuncOp>(op))
+                    {
+                        freqMap[op->getName().getStringRef()]++;
+                    }
+
+                });
+
+                //Output
+                llvm::outs() << "Function: " << func.getName() << "\n";
+                llvm::outs() << "Content: \n" << func << "\n";
+                llvm::outs() << "Arguments: "<< func.getNumArguments() << "\n";
+
+                for(auto arg : func.getArguments())
+                {
+                    llvm::outs() << "Arg Type: " << arg.getType() << "\n";
+                }
+
+                llvm::outs() << "Operations: \n";
+                for (auto &it : freqMap)
+                {
+                    llvm::outs() << it.getKey() << " : " << it.getValue() << "\n";
+                }
+
+                for (Type t : func.getResultTypes())
+                {
+                    llvm::outs() << "Return Type: " << t << "\n";
+                }
+                
+                //LOOP 
+                int loopCount = 0;
+                func.walk([&](scf::ForOp loop)
+                {
+                    //count number of loops
+                    loopCount++;
+
+                    //output parameters
+                    llvm::outs() << "Found loop \n";
+                    llvm::outs() << "Lower Bound: " << loop.getLowerBound() << "\n";
+                    llvm::outs() << "Upper Bound: " << loop.getUpperBound() << "\n";
+                    llvm::outs() << "Step: " << loop.getStep() << "\n";
+                    llvm::outs() << loop << "\n";
+                    
+                    //inside loop body
+                    llvm::StringMap<int> counts;
+                    loop.getBody()->walk([&](Operation *op)
+                    {
+                        if(!isa<scf::YieldOp>(op))
+                        {
+                            counts[op->getName().getStringRef()]++;
+                        }
+
+                    });
+
+                    for(auto &item : counts)
+                    {
+                        llvm::outs() << item.getKey() << " : " << item.getValue() << "\n";
+                    }
+
+                });
+
+                bool optimized = false;
+                func.walk([&](scf::ForOp loop)
+                {
+                    loop.getBody()->walk([&](arith::AddIOp add)
+                    {
+                        bool invariant = true;
+                        for(Value operand : add.getOperands())
+                        {
+                            auto *defOp = operand.getDefiningOp();
+                            if(defOp && loop->isAncestor(defOp))
+                            {
+                                invariant = false;
+                                break;
+                            }
+
+                        }//
+
+                        if(invariant == true)
+                        {
+                            llvm::outs() << "Found invariant: " << add << "\n";
+                            add->moveBefore(loop);
+                            optimized = true;
+                        }
+
+                    });
+
+                });
+                
+                llvm::outs() << "Loop count " << loopCount << "\n";
+
+                //Optimized function
+                if(optimized == true)
+                {
+                    llvm::outs() << "Optimized Func :" << func << "\n";
+                }
+                
+                llvm::outs() << "\n\n";
+
             });
 
         }
 
-    }
+    };
 
    
 }//namespace
@@ -265,4 +368,5 @@ void registerMyPass()
 {
     PassRegistration<MyPass>();
     PassRegistration<PrintOpsPass>();
+    PassRegistration<FunctionStatsPass>();
 }
