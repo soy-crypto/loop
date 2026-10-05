@@ -228,7 +228,7 @@ namespace
 
     };
 
-    //pass3
+    //pass3 - Function
     struct FunctionStatsPass : PassWrapper<FunctionStatsPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(FunctionStatsPass);
