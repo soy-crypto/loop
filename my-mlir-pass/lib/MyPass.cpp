@@ -380,80 +380,92 @@ namespace
             //travers all functions
             getOperation()->walk([&](func::FuncOp func)
             {
-                //init
-                bool globalFound = false;
-                
-                //traverse all loops
+                //Traverse all loops
+                bool funcChanged = false;
                 func.walk([&](scf::ForOp loop)
                 {
                     //current loop
-                    bool localFound = false;
-
-                    //traverse ops in the loop
-                    SmallVector<Operation*> movedOps;
-                    loop.getBody()->walk([&](Operation *op)
+                    bool moved = true;
+                    while(true)
                     {
-                        //check current op
-                        bool found = true;
-                        if(isa<arith::ConstantOp>(op))
+                        //TC
+                        if(moved == false)
                         {
-                            found = true;
-                            movedOps.push_back(op);
+                            break;
                         }
-                        else if(!isa<scf::YieldOp>(op) && !isa<func::ReturnOp>(op))
-                        {
-                            for(Value operand : op->getOperands())
-                            {
-                                if(operand != loop.getInductionVar())
-                                {
-                                    auto *defOp = operand.getDefiningOp();
-                                    found &= defOp && loop->isAncestor(defOp) ? false : true; 
-                                }
-                                else
-                                {
-                                    found = false;
-                                    break;
-                                }
-                                
-                            }//for
 
+                        //Body
+                        SmallVector<Operation*> movedOps;
+                        loop.getBody()->walk([&](Operation *op)
+                        {
+                            //Check current op
+                            bool found = false;
+                            if(isa<arith::ConstantOp>(op))
+                            {
+                                found = true;
+                            }
+                            else if(!isa<scf::YieldOp>(op) && !isa<func::ReturnOp>(op))
+                            {
+                                bool flag = true;
+                                for(Value operand : op->getOperands())
+                                {
+                                    if(operand != loop.getInductionVar())
+                                    {
+                                        auto *defOp = operand.getDefiningOp();
+                                        flag &= defOp && loop->isAncestor(defOp) ? false : true; 
+                                    }
+                                    else
+                                    {
+                                        flag = false;
+                                        break;
+                                    }
+                                    
+                                }//for
+
+                                //Update found
+                                found = flag;
+
+                            }//else
+
+                            //Update movedOps
                             if(found == true)
                             {
                                 movedOps.push_back(op);
                             }
 
-                        }
-
-                        //update localFound
-                        localFound |= found;
-
-                    });
-
-                    if(!movedOps.empty())
-                    {
-                        for(Operation *op : movedOps)
+                        });
+                        
+                        //Move operations
+                        if(!movedOps.empty())
                         {
-                            op->moveBefore(loop);
-                        }//
+                            for(Operation *op : movedOps)
+                            {
+                                op->moveBefore(loop);
+                            }//
 
-                    }//if
-                    
-                    //update global invariant
-                    globalFound |= localFound;
+                            moved = true;
+                            funcChanged = true;
+
+                        }//if
+                        else
+                        {
+                            moved = false;
+                        }
+                        
+                    }//while
                     
                 });
 
-                //output
-                if(globalFound == true)
+                //Display optimized func
+                if(funcChanged == true)
                 {
-                    llvm::outs() << "LIVMed function" << func << "\n";
+                    llvm::outs() << "Optimized! : " << func << endl;
                 }
 
             });
-
             
             //Display end
-            llvm::outs() << "-----LICM end -----" << "\n\n";
+            llvm::outs() << "-----LICM end -----\n" << endl;
 
             //return
             return;
