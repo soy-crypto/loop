@@ -182,7 +182,7 @@ namespace
     };
 
     //Pass
-    //pass1
+    //pass - patterns
     struct MyPass : PassWrapper<MyPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(MyPass);
