@@ -475,6 +475,85 @@ namespace
     };
 
     //pass - DCE
+    struct DCEPass : PassWrapper<DCEPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(DCEPass);
+        
+        StringRef getArgument() const override
+        {
+            return "dce";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "dce elimination!";
+        }
+        
+        void runOnOperation() override
+        {
+            //Display start
+            llvm::outs() << "-----DCE Start-----" << "\n";
+
+            //Travers all ops
+            getOperation()->walk([](func::FuncOp func)
+            {
+                //curreent func
+                bool found = false;
+                bool changed = true;
+                SmallVector<Operation*> movedOps;
+                while(true)
+                {
+                    //tc
+                    if(changed == false)
+                    {
+                        break;
+                    }
+
+                    //body
+                    func.walk([&](Operation* op)
+                    {
+                        if(op->use_empty() && op->getNumResults() >= 1)
+                        {
+                            movedOps.push_back(op);
+                            found = true;
+                        }
+
+                    });
+
+                    //moved
+                    if(!movedOps.isEmpty())
+                    {
+                        for(Operation* op : movedOps)
+                        {
+                            op->erase();
+                        }
+
+                        changed = true;
+                    }
+                    else
+                    {
+                        changed = false;
+                    }
+                    
+                }//while
+
+                //shoed dced func
+                if(found == true)
+                {
+                    llvm::outs() << "DECed Func : " << func << "\n";
+                }
+                
+            });
+
+            //Display end
+            llvm::outs() << "-----DCE End-----" << "\n";
+            
+            //Return
+            
+        }
+
+    }
+
 
    
 }//namespace
