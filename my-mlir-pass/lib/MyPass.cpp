@@ -357,7 +357,7 @@ namespace
 
     };
 
-    //pass - licm
+    //pass - LICM
     struct LICMPass : PassWrapper<LICMPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LICMPass);
@@ -459,13 +459,13 @@ namespace
                 //Display optimized func
                 if(funcChanged == true)
                 {
-                    llvm::outs() << "Optimized! : " << func << endl;
+                    llvm::outs() << "Optimized! : " << func << "\n";
                 }
 
             });
             
             //Display end
-            llvm::outs() << "-----LICM end -----\n" << endl;
+            llvm::outs() << "-----LICM end -----\n" << "\n";
 
             //return
             return;
@@ -473,6 +473,8 @@ namespace
         }//void
 
     };
+
+    //pass - DCE
 
    
 }//namespace
