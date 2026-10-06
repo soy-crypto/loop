@@ -583,6 +583,7 @@ namespace
                 //current func
                 bool isCF = false;
 
+                //get all deadOps
                 SmallVector<Operation*> deadOps;
                 func.walk([&](Operation* op)
                 {
@@ -598,24 +599,24 @@ namespace
                     Value lhs = operands[0], rhs = operands[1];
                     auto lhsDef = lhs.getDefiningOp<arith::ConstantOp>();
                     auto rhsDef = rhs.getDefiningOp<arith::ConstantOp>();
+                    int64_t result = 0;
                     if(lhsDef != nullptr && rhsDef != nullptr)
                     {
                         //compute new constant
-                        int64_t result 0;
-                        int64_t lhsValue = lhsDef.getValue().cast<IntegerAttr>.getInt();
-                        int64_t rhsValue = rhsDef.getValue().cast<IntegerAttr>.getInt();
+                        auto lhsAttr = dny_cast<IntegerAttr>(lhsDef.getValue());
+                        auto rhsAttr = dny_cast<IntegerAttr>(rhsDef.getValue());
                         if(isa<arith::AddIOp>(op))
                         {
                             result = lhsValue + rhsValue;
+                            found = true;
                         }
                         else if(isa<arith::MulIOp>(op))
                         {
                             result = lhsValue * rhsValue;
+                            found = true;
                         }
-
-                        //update found && isCF
-                        found = true;
-                    }
+                        
+                    }//if
                     
                     //replace dead op with new value
                     if(found == true)
@@ -630,8 +631,9 @@ namespace
 
                         //update isCF
                         isCF = true;
-                    }
-                    
+
+                    }//if
+
                     //return
                     return;
 
