@@ -472,7 +472,7 @@ namespace
 
         }//void
 
-    };
+    }; //LICM Pass
 
     //pass - DCE
     struct DCEPass : PassWrapper<DCEPass, OperationPass<ModuleOp>>
@@ -555,7 +555,7 @@ namespace
             return;
         }
 
-    };
+    }; //DCE Pass
 
     //pass - CF
     struct CFPass: PassWrapper<CFPass, OperationPass<ModuleOp>>
@@ -626,7 +626,7 @@ namespace
                         //replace CF ops
                         OpBuilder builder(op);
                         auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
-                        op->replaceAllUsesWith(newConst.getOperation());
+                        op->getResult(0).replaceAllUsesWith(newConst.getResult());
 
                         //update isCF
                         isCF = true;
