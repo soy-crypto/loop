@@ -644,6 +644,7 @@ namespace
                 {
                     op->erase();
                 }
+                deadOps.clear();
 
                 //show optimized func
                 if(isCF == true)
