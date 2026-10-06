@@ -581,6 +581,7 @@ namespace
             getOperation()->walk([](func::FuncOp func)
             {
                 //current func
+                bool found = false;
                 func.walk([](Operation* op)
                 {
                     //current op
@@ -606,28 +607,35 @@ namespace
                         {
                             result = lhsValue * lhsValue;
                         }
-                        
-                    }
-                    else
-                    {
-                        return;
+
+                        //update found
+                        found = true;
                     }
                     
+                    //moved
+                    if(found == true)
+                    {
+                        
+                    }
+                    
+                    //return
+                    return;
                 });
 
-            }
-            );
+                //show optimized func
+                if(found == true)
+                {
+                    llvm::outs() << "CFed func: " << func << "\n";
+                }
+
+            });
 
             //Display CF end
             llvm::outs() << "-----CF end-----" << "\n";
 
-        }
-    };
-    
-
-    
-
-
+        }//void
+        
+    }; // CF pass
    
 }//namespace
 
