@@ -615,6 +615,17 @@ namespace
                             result = lhsValue * rhsValue;
                             found = true;
                         }
+                        else if(isa<arith::SubIOp>(op))
+                        {
+
+                        }
+                        else if()
+                        {}
+                        else if()
+                        {
+                            
+                        }
+
                         
                     }//if
                     
