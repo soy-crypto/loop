@@ -96,9 +96,4 @@ module
         return
     }
 
-    func.func @cf()
-    {
-        
-    }
-
 }

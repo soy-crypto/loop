@@ -497,14 +497,16 @@ namespace
             //Travers all ops
             getOperation()->walk([](func::FuncOp func)
             {
-                //curreent func
+                //Dec found status
                 bool found = false;
-                bool changed = true;
+
+                //Dec checking
+                bool moved = true;
                 SmallVector<Operation*> movedOps;
                 while(true)
                 {
                     //tc
-                    if(changed == false)
+                    if(moved == false)
                     {
                         break;
                     }
@@ -521,23 +523,24 @@ namespace
                     });
 
                     //moved
-                    if(!movedOps.isEmpty())
+                    if(!movedOps.empty())
                     {
                         for(Operation* op : movedOps)
                         {
                             op->erase();
                         }
-
-                        changed = true;
+                        movedOps.clear();
+                        
+                        moved = true;
                     }
                     else
                     {
-                        changed = false;
+                        moved = false;
                     }
                     
                 }//while
 
-                //shoed dced func
+                //show dced func
                 if(found == true)
                 {
                     llvm::outs() << "DECed Func : " << func << "\n";
@@ -549,10 +552,80 @@ namespace
             llvm::outs() << "-----DCE End-----" << "\n";
             
             //Return
-            
+            return;
         }
 
-    }
+    };
+
+    //pass - CF
+    struct CFPass: PassWrapper<CFPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICT_INLINE_TYPE_ID(CFPass);
+        
+        StringRef getArgument() const override
+        {
+            return "cf";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "cf elimination";
+        }
+
+        void runOnOperation() override
+        {
+            //Displaye CF start
+            llvm::outs() << "-----CF start-----" << "\n";
+            
+            //CF checking
+            getOperation()->walk([](func::FuncOp func)
+            {
+                //current func
+                func.walk([](Operation* op)
+                {
+                    //current op
+                    auot operands = op->getOperands();
+                    if(operands.size() != 2)
+                    {
+                        return;
+                    }
+
+                    Value lhs = operands[0], rhs = operands[1];
+                    auto *lhsDef = lhs.getDefiningOp<arith::ConstantOp>();
+                    auto *rhsDef = rhs.getDefiningOP<arith::ConstantOp>();
+                    if(lhsDef != nullptr && rhsDef != nullptr)
+                    {
+                        int64_t result;
+                        int64_t lhsValue = lhsDef->getValue().cast<IntegerAttr>.getInt();
+                        int64_t rhsValue = rhsDef->getValue().cast<IntegerAttr>.getInt();
+                        if(isa<arith::AddIOp>(op))
+                        {
+                            result = lhsValue + rhsValue;
+                        }
+                        else if(isa<arith::MulIOp>(op))
+                        {
+                            result = lhsValue * lhsValue;
+                        }
+                        
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    
+                });
+
+            }
+            );
+
+            //Display CF end
+            llvm::outs() << "-----CF end-----" << "\n";
+
+        }
+    };
+    
+
+    
 
 
    
@@ -565,4 +638,5 @@ void registerMyPass()
     PassRegistration<PrintOpsPass>();
     PassRegistration<FunctionStatsPass>();
     PassRegistration<LICMPass>();
+    PassRegistration<DCEPass>();
 }
