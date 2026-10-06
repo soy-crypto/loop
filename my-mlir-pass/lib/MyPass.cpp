@@ -581,49 +581,70 @@ namespace
             getOperation()->walk([](func::FuncOp func)
             {
                 //current func
-                bool found = false;
-                func.walk([](Operation* op)
+                bool isCF = false;
+
+                SmallVector<Operation*> deadOps;
+                func.walk([&](Operation* op)
                 {
-                    //current op
-                    auot operands = op->getOperands();
+                    //get curent op's operands
+                    auto operands = op->getOperands();
                     if(operands.size() != 2)
                     {
                         return;
                     }
-
+                    
+                    //check current op is dead op
+                    bool found = false;
                     Value lhs = operands[0], rhs = operands[1];
-                    auto *lhsDef = lhs.getDefiningOp<arith::ConstantOp>();
-                    auto *rhsDef = rhs.getDefiningOP<arith::ConstantOp>();
+                    auto lhsDef = lhs.getDefiningOp<arith::ConstantOp>();
+                    auto rhsDef = rhs.getDefiningOp<arith::ConstantOp>();
                     if(lhsDef != nullptr && rhsDef != nullptr)
                     {
-                        int64_t result;
-                        int64_t lhsValue = lhsDef->getValue().cast<IntegerAttr>.getInt();
-                        int64_t rhsValue = rhsDef->getValue().cast<IntegerAttr>.getInt();
+                        //compute new constant
+                        int64_t result 0;
+                        int64_t lhsValue = lhsDef.getValue().cast<IntegerAttr>.getInt();
+                        int64_t rhsValue = rhsDef.getValue().cast<IntegerAttr>.getInt();
                         if(isa<arith::AddIOp>(op))
                         {
                             result = lhsValue + rhsValue;
                         }
                         else if(isa<arith::MulIOp>(op))
                         {
-                            result = lhsValue * lhsValue;
+                            result = lhsValue * rhsValue;
                         }
 
-                        //update found
+                        //update found && isCF
                         found = true;
                     }
                     
-                    //moved
+                    //replace dead op with new value
                     if(found == true)
                     {
-                        
+                        //record CF ops
+                        deadOps.push_back(op);
+
+                        //replace CF ops
+                        OpBuilder builder(op);
+                        auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
+                        op->replaceAllUsesWith(newConst.getOperation());
+
+                        //update isCF
+                        isCF = true;
                     }
                     
                     //return
                     return;
+
                 });
 
+                //batch erase dead ops
+                for(Operation* op : deadOps)
+                {
+                    op->erase();
+                }
+
                 //show optimized func
-                if(found == true)
+                if(isCF == true)
                 {
                     llvm::outs() << "CFed func: " << func << "\n";
                 }
