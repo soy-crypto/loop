@@ -560,7 +560,7 @@ namespace
     //pass - CF
     struct CFPass: PassWrapper<CFPass, OperationPass<ModuleOp>>
     {
-        MLIR_DEFINE_EXPLICT_INLINE_TYPE_ID(CFPass);
+        MLIR_DEFINE_EXPLICIT_INLINE_TYPE_ID(CFPass);
         
         StringRef getArgument() const override
         {
@@ -572,105 +572,136 @@ namespace
             return "cf elimination";
         }
 
-        void runOnOperation() override
+        //get all dead ops of current func
+        SmallVector<Operation*> getDeadOps(func::FuncOp func)
         {
-            //Displaye CF start
-            llvm::outs() << "-----CF start-----" << "\n";
+            //init deadOps
+            SmallVector<Operation* op> deadOps;
             
-            //CF checking
-            getOperation()->walk([](func::FuncOp func)
+            //get all deadOps of current funct
+            func.walk([&](Operation* op)
             {
-                //current func
-                bool isCF = false;
-
-                //get all deadOps
-                SmallVector<Operation*> deadOps;
-                func.walk([&](Operation* op)
+                //get curent op's operands
+                auto operands = op->getOperands();
+                if(operands.size() != 2)
                 {
-                    //get curent op's operands
-                    auto operands = op->getOperands();
-                    if(operands.size() != 2)
+                    return;
+                }
+                
+                //check current op is dead op
+                bool found = false;
+                auto lhsDef = operands[0].getDefiningOp<arith::ConstantOp>();
+                auto rhsDef = operands[1].getDefiningOp<arith::ConstantOp>();
+                int64_t result = 0;
+                if(lhsDef != nullptr && rhsDef != nullptr)
+                {
+                    //get left attrs and right attrs
+                    auto lhsAttr = dyn_cast<IntegerAttr>(lhsDef.getValue());
+                    auto rhsAttr = dyn_cast<IntegerAttr>(rhsDef.getValue());
+                    if(lhsAttr == nullptr || rhsAttr == nullptr)
                     {
                         return;
                     }
-                    
-                    //check current op is dead op
-                    bool found = false;
-                    Value lhs = operands[0], rhs = operands[1];
-                    auto lhsDef = lhs.getDefiningOp<arith::ConstantOp>();
-                    auto rhsDef = rhs.getDefiningOp<arith::ConstantOp>();
-                    int64_t result = 0;
-                    if(lhsDef != nullptr && rhsDef != nullptr)
+
+                    //compute new constant
+                    int64_t lhsValue = lhsAttr.getInt(), rhsValue = rhsAttr.getInt();
+                    if(isa<arith::AddIOp>(op))
                     {
-                        //compute new constant
-                        auto lhsAttr = dny_cast<IntegerAttr>(lhsDef.getValue());
-                        auto rhsAttr = dny_cast<IntegerAttr>(rhsDef.getValue());
-                        if(isa<arith::AddIOp>(op))
-                        {
-                            result = lhsValue + rhsValue;
-                            found = true;
-                        }
-                        else if(isa<arith::MulIOp>(op))
-                        {
-                            result = lhsValue * rhsValue;
-                            found = true;
-                        }
-                        else if(isa<arith::SubIOp>(op))
-                        {
-
-                        }
-                        else if()
-                        {
-                            
-                        }
-                        else if()
-                        {
-
-                        }
-
-                        
-                    }//if
-                    
-                    //replace dead op with new value
-                    if(found == true)
+                        result = lhsValue + rhsValue;
+                        found = true;
+                    }
+                    else if(isa<arith::MulIOp>(op))
                     {
-                        //record CF ops
-                        deadOps.push_back(op);
+                        result = lhsValue * rhsValue;
+                        found = true;
+                    }
+                    else if(isa<arith::SubIOp>(op))
+                    {
+                        result = lhsValue - rhsValue;
+                        found = true;
+                    }
+                    else if(isa<ariths::DivSIOp>(op) && rhsValue != 0)
+                    {
+                        result = lhsValue / rhsValue;
+                        found = true;
+                    }
+                    else if(isa<ariths::RemSIOp>(op))
+                    {
+                        result = lhsValue % rhsValue;
+                        found = true;
+                    }
 
-                        //replace CF ops
-                        OpBuilder builder(op);
-                        auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
-                        op->getResult(0).replaceAllUsesWith(newConst.getResult());
-
-                        //update isCF
-                        isCF = true;
-
-                    }//if
-
-                    //return
-                    return;
-
-                });
-
-                //batch erase dead ops
-                for(Operation* op : deadOps)
+                }//if
+                
+                //replace dead op with new value
+                if(found == true)
                 {
-                    op->erase();
-                }
-                deadOps.clear();
+                    //record CF ops
+                    deadOps.push_back(op);
+                }//if
 
-                //show optimized func
-                if(isCF == true)
-                {
-                    llvm::outs() << "CFed func: " << func << "\n";
-                }
+                //return
+                return;
 
             });
+        
+        }//getDeadOps()
 
-            //Display CF end
-            llvm::outs() << "-----CF end-----" << "\n";
+        void runOnOperation() override
+        {   
+            //traverse all funcs
+            getOperation()->walk([](func::FuncOp func)
+            {
+                //get all deadOps
+                bool deleted = true;
+                SmallVector<Operation*> deadOps;
+                while(true)
+                {
+                    if(deleted == false)
+                    {
+                        break;
+                    }
+
+                    //get dead ops of current func
+                    SmallVector<Operation*> deadOps;
+                    deadOps = getDeadOps(func);
+                    
+                    //batch erase dead ops
+                    if(!deadOps.empty())
+                    {
+                        //delete dead ops from func
+                        for(Operation* op : deadOps)
+                        {
+                            //replace CF ops
+                            OpBuilder builder(op);
+                            auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
+                            if(op->getNumResults() == 1)
+                            {
+                                op->getResult(0).replaceAllUsesWith(newConst.getResult());
+                            }
+                            
+                            //erase op
+                            op->erase();
+                        }
+
+                        //clera deadOps
+                        deadOps.clear();
+
+                        //update flag delete
+                        deleted = true;
+                    }
+                    else
+                    {
+                        deleted = false;
+                    }
+
+                }//while
+
+            }); //getOperation()
 
         }//void
+
+
         
     }; // CF pass
    
@@ -684,4 +715,5 @@ void registerMyPass()
     PassRegistration<FunctionStatsPass>();
     PassRegistration<LICMPass>();
     PassRegistration<DCEPass>();
+    PassRegistration<CFPass>();
 }
