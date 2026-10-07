@@ -645,7 +645,7 @@ namespace
             {
                 result = lV - rV;
             }
-            else if(is<arith::DivIOp>(op))
+            else if(is<arith::DivSIOp>(op))
             {
                 result = lV / rV;
             }
@@ -691,7 +691,7 @@ namespace
                             //replace CF ops
                             OpBuilder builder(op);
                             auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
-                            op->getResult(0).replaceAllUsesWith(newConst);
+                            op->getResult(0).replaceAllUsesWith(newConst.getResult());
                             
                             //erase op
                             op->erase();
