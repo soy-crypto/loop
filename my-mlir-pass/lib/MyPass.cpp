@@ -582,8 +582,8 @@ namespace
             }
             
             //Get all deadOps of current funct
-            llvm::DenseMap<Operation* op, int64_t> foldedOpsMap;
-            func.walk([&](Operation* op)
+            llvm::DenseMap<Operation*, int64_t> foldedOpsMap;
+            func.walk([&foldedOpsMap, this](Operation* op)
             {
                 //Init
                 if(op->getNumResults() != 1 || op->getOperands().size() != 2)
@@ -609,7 +609,7 @@ namespace
                     int64_t lV = lhsAttr.getInt(), rV = rhsAttr.getInt();
                     if(isa<arith::AddIOp>(op) || isa<arith::MulIOp>(op) || isa<arith::SubIOp>(op) || (isa<arith::RemSIOp>(op) && rV != 0) || (isa<arith::DivSIOp>(op) && rV != 0))
                     {
-                        foldedOpsMap[op] = getConstantResult(op, lV, rV);
+                        foldedOpsMap[op] = this->getConstantResult(op, lV, rV);
                     }
 
                 }//if
@@ -631,7 +631,7 @@ namespace
                 return 0;
             }
 
-            //compoute
+            //Compoute
             int64_t result = 0;
             if(isa<arith::AddIOp>(op))
             {
@@ -645,7 +645,7 @@ namespace
             {
                 result = lV - rV;
             }
-            else if(is<arith::DivSIOp>(op))
+            else if(isa<arith::DivSIOp>(op))
             {
                 result = lV / rV;
             }
@@ -662,17 +662,17 @@ namespace
         void runOnOperation() override
         {   
             //traverse all funcs
-            getOperation()->walk([](func::FuncOp func)
+            getOperation()->walk([this](func::FuncOp func)
             {
-                //check validity
+                //Check validity
                 if(func == nullptr)
                 {
                     return;
                 }
 
-                //CF action
+                //CF perform
                 bool deleted = true;
-                llvm::DenseMap<Operation* op, int64_t> foldedOpsMap;
+                llvm::DenseMap<Operation* , int64_t> foldedOpsMap;
                 while(true)
                 {
                     if(deleted == false)
@@ -681,7 +681,7 @@ namespace
                     }
 
                     //get dead ops of current func
-                    foldedOpsMap = getDeadOps(func);
+                    foldedOpsMap = this->getFoldedOps(func);
                     
                     //batch erase dead ops
                     if(!foldedOpsMap.empty())
@@ -690,7 +690,7 @@ namespace
                         {
                             //replace CF ops
                             OpBuilder builder(op);
-                            auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
+                            auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), op->getResult(0).getType(), result);
                             op->getResult(0).replaceAllUsesWith(newConst.getResult());
                             
                             //erase op
