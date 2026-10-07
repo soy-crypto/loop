@@ -560,7 +560,7 @@ namespace
     //pass - CF
     struct CFPass: PassWrapper<CFPass, OperationPass<ModuleOp>>
     {
-        MLIR_DEFINE_EXPLICIT_INLINE_TYPE_ID(CFPass);
+        MLIR_DEFINE_EXPLICIT_INTRENAL_TYPE_ID(CFPass);
         
         StringRef getArgument() const override
         {
