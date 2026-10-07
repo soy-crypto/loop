@@ -573,26 +573,28 @@ namespace
         }
 
         //get all dead ops of current func
-        SmallVector<Operation*> getDeadOps(func::FuncOp func)
+        llvm::DenseMap<Operation* op, int64_t> getFoldedOps(func::FuncOp func)
         {
-            //init deadOps
-            SmallVector<Operation* op> deadOps;
+            //Check validity
+            if(func == nullptr)
+            {
+                return {};
+            }
             
-            //get all deadOps of current funct
+            //Get all deadOps of current funct
+            llvm::DenseMap<Operation* op, int64_t> foldedOpsMap;
             func.walk([&](Operation* op)
             {
-                //get curent op's operands
-                auto operands = op->getOperands();
-                if(operands.size() != 2)
+                //Init
+                if(op->getNumResults() != 1 || op->getOperands().size() != 2)
                 {
-                    return;
+                    return; 
                 }
                 
-                //check current op is dead op
-                bool found = false;
+                //Check current op is dead op
+                auto operands = op->getOperands();
                 auto lhsDef = operands[0].getDefiningOp<arith::ConstantOp>();
                 auto rhsDef = operands[1].getDefiningOp<arith::ConstantOp>();
-                int64_t result = 0;
                 if(lhsDef != nullptr && rhsDef != nullptr)
                 {
                     //get left attrs and right attrs
@@ -604,57 +606,73 @@ namespace
                     }
 
                     //compute new constant
-                    int64_t lhsValue = lhsAttr.getInt(), rhsValue = rhsAttr.getInt();
-                    if(isa<arith::AddIOp>(op))
+                    int64_t lV = lhsAttr.getInt(), rV = rhsAttr.getInt();
+                    if(isa<arith::AddIOp>(op) || isa<arith::MulIOp>(op) || isa<arith::SubIOp>(op) || (isa<arith::RemSIOp>(op) && rV != 0) || (isa<arith::DivSIOp>(op) && rV != 0))
                     {
-                        result = lhsValue + rhsValue;
-                        found = true;
-                    }
-                    else if(isa<arith::MulIOp>(op))
-                    {
-                        result = lhsValue * rhsValue;
-                        found = true;
-                    }
-                    else if(isa<arith::SubIOp>(op))
-                    {
-                        result = lhsValue - rhsValue;
-                        found = true;
-                    }
-                    else if(isa<ariths::DivSIOp>(op) && rhsValue != 0)
-                    {
-                        result = lhsValue / rhsValue;
-                        found = true;
-                    }
-                    else if(isa<ariths::RemSIOp>(op))
-                    {
-                        result = lhsValue % rhsValue;
-                        found = true;
+                        foldedOpsMap[op] = getConstantResult(op, lV, rV);
                     }
 
                 }//if
-                
-                //replace dead op with new value
-                if(found == true)
-                {
-                    //record CF ops
-                    deadOps.push_back(op);
-                }//if
 
-                //return
+                //Return
                 return;
-
             });
+
+            //Return
+            return foldedOpsMap;
         
         }//getDeadOps()
 
+        int64_t getConstantResult(Operation* op, int64_t lV, int64_t rV)
+        {
+            //Check validity
+            if(op == nullptr)
+            {
+                return 0;
+            }
+
+            //compoute
+            int64_t result = 0;
+            if(isa<arith::AddIOp>(op))
+            {
+                result = lV + rV;
+            }
+            else if(isa<arith::MulIOp>(op))
+            {
+                result = lV * rV;
+            }
+            else if(isa<arith::SubIOp>(op))
+            {
+                result = lV - rV;
+            }
+            else if(is<arith::DivIOp>(op))
+            {
+                result = lV / rV;
+            }
+            else // % computatiob
+            {
+                result = lV % rV;
+            }
+
+            //Return
+            return result;
+        }//
+
+        //operations
         void runOnOperation() override
         {   
             //traverse all funcs
             getOperation()->walk([](func::FuncOp func)
             {
-                //get all deadOps
+                //check validity
+                if(func == nullptr)
+                {
+                    return;
+                }
+
+                //CF action
                 bool deleted = true;
-                SmallVector<Operation*> deadOps;
+                llvm::DenseMap<Operation* op, int64_t> foldedOpsMap;
                 while(true)
                 {
                     if(deleted == false)
@@ -663,29 +681,21 @@ namespace
                     }
 
                     //get dead ops of current func
-                    SmallVector<Operation*> deadOps;
-                    deadOps = getDeadOps(func);
+                    foldedOpsMap = getDeadOps(func);
                     
                     //batch erase dead ops
-                    if(!deadOps.empty())
+                    if(!foldedOpsMap.empty())
                     {
-                        //delete dead ops from func
-                        for(Operation* op : deadOps)
+                        for(auto &[op, result] : foldedOpsMap)
                         {
                             //replace CF ops
                             OpBuilder builder(op);
                             auto newConst = builder.create<arith::ConstantIntOp>(op->getLoc(), result, 32);
-                            if(op->getNumResults() == 1)
-                            {
-                                op->getResult(0).replaceAllUsesWith(newConst.getResult());
-                            }
+                            op->getResult(0).replaceAllUsesWith(newConst);
                             
                             //erase op
                             op->erase();
-                        }
-
-                        //clera deadOps
-                        deadOps.clear();
+                        }//
 
                         //update flag delete
                         deleted = true;
@@ -697,12 +707,15 @@ namespace
 
                 }//while
 
+                //Return
+                return;
+
             }); //getOperation()
 
+            //Return
+            return;
         }//void
 
-
-        
     }; // CF pass
    
 }//namespace
