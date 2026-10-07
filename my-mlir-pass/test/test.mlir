@@ -98,7 +98,13 @@ module
 
     func.func @cf()
     {
+        %c1 = arith.constant 1 : i32
+        %c2 = arith.constant 2 : i32
+        %a = arith.addi %c1, %c2 : i32
+        %c3 = arith.constant 3 : i32
+        %b = arith.multi %a, %c3 : i32
         
+        return
     }
 
 }
