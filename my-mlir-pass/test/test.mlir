@@ -51,7 +51,6 @@ module
 
         scf.for %i = %c0 to %c10 step %c1
         {
-
         }
 
         return
@@ -102,7 +101,7 @@ module
         %c2 = arith.constant 2 : i32
         %a = arith.addi %c1, %c2 : i32
         %c3 = arith.constant 3 : i32
-        %b = arith.multi %a, %c3 : i32
+        %b = arith.muli %a, %c3 : i32
         
         return
     }

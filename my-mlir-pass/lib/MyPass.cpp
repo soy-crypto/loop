@@ -560,7 +560,7 @@ namespace
     //pass - CF
     struct CFPass: PassWrapper<CFPass, OperationPass<ModuleOp>>
     {
-        MLIR_DEFINE_EXPLICIT_INTRENAL_TYPE_ID(CFPass);
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CFPass);
         
         StringRef getArgument() const override
         {
@@ -573,7 +573,7 @@ namespace
         }
 
         //get all dead ops of current func
-        llvm::DenseMap<Operation* op, int64_t> getFoldedOps(func::FuncOp func)
+        llvm::DenseMap<Operation*, int64_t> getFoldedOps(func::FuncOp func)
         {
             //Check validity
             if(func == nullptr)
@@ -717,6 +717,8 @@ namespace
         }//void
 
     }; // CF pass
+
+    
    
 }//namespace
 
