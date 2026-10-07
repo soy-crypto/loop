@@ -103,7 +103,7 @@ module
         %c3 = arith.constant 3 : i32
         %b = arith.muli %a, %c3 : i32
         
-        return
+        retur
     }
 
 }
