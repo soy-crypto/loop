@@ -914,15 +914,8 @@ namespace
                 }
 
                 //get IC ops
-                auto operands = op->getOperands();
-                if(this->isConstant(operands[0], 0))
-                {
-
-                }
-                else if(this->isConstant(operands[1], 0))
-                {
-
-                }
+                ICZero(op->getOperands());
+                ICOne(op->getOperands());
 
                 //return
                 return;
@@ -937,6 +930,28 @@ namespace
         {
             
         }
+
+        bool isZero(Value operand)
+        {
+            //Check validity
+            if(operand == nullptr)
+            {
+                return false;
+            }
+
+            //Check
+            bool flag = false;
+            auto defOp = operand.getDefiningOp<arith::ConstantOp>();
+            auto attr = dyn_cast<IntegerAttr>(defOp.getValue());
+            if(defOp && attr == 0)
+            {
+                flag = true;
+            }
+
+            //Return
+            return flag;
+        }
+
 
     }; // ICPass
 
