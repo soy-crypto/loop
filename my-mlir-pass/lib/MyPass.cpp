@@ -719,6 +719,107 @@ namespace
     }; // CF pass
 
     //pass - CSE
+    struc CSEPass : PassWrapper<CSEPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CFPass);
+        
+        StringRef getArgument() const override
+        {
+            return "cse";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "csed elimination!";
+        }
+
+        //operation
+        void runOnOperation() override
+        {
+            getOperation()->walk([this](func::FuncOp func)
+            {
+                //checking validity
+                if(func == nullptr)
+                {
+                    return;
+                }
+
+                //cse deletion
+                llvm::DenseMap<Operation*, Operation*> cseOps = {};
+                bool deleted = true;
+                while(true)
+                {
+                    //tc
+                    if(deleted == false)
+                    {
+                        break;
+                    }
+
+                    //get cse ops
+                    cseOps = this->getCseOps(func);
+
+                    //delete cse code
+                    if(!cseOps.empty())
+                    {
+                        for(auto &[op1, op2] : cseOps)
+                        {
+                            op1->getResult(0).replaceAllUsesWith(op2->getResult(0));
+                            op1->erase();
+                        }
+
+                        deleted = true;
+
+                    }//
+                    else
+                    {
+                        delted = false;
+                    }
+
+                }//while
+                
+
+            });//
+
+
+        }//void
+
+        //get cse ops
+        llvm::DenseMap<Operatoion*, Operation*> getCseOps(func::FuncOp func)
+        {
+            //check validity
+            if(func == nullptr)
+            {
+                return {};
+            }
+
+            //get cse ops
+            llvm::DenseMap<Operation*, Operation*> cseOps = {};
+            SmallVector<String> firstOp = {};
+            func->walk([firstOp, cseOps](Operation* op)
+            {
+                //checking validity
+                if(op == nullptr)
+                {
+                    return;
+                }
+
+                //get cse ops
+                auto operands = op->getOperands();
+                String key1 = op->getRefName() + "-" + operands[0] + "-" + operands[1];
+                String key2 = op->getRefName() + "-" + operands[1] + "-" + operands[0];
+                if(!firstOp.contains(key1) && firstOp.contains(key2))
+                {
+                    firstOp.push_back(op);
+                    cseOps[op] = 
+                    
+                }
+                
+            });
+
+        }//get cse ops
+
+ 
+    };// CF Pass
 
     
 
