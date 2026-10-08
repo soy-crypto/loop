@@ -860,7 +860,30 @@ namespace
         }//get cse ops
 
  
-    };// CF Pass
+    };// Pass
+
+    //pass - Instant Combine
+    struct ICPass : PassWrapper<ICPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ICPass);
+
+        StringRef getArgument() const override
+        {
+            return "ic";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "ic deletion";
+        }
+
+        void runOnOperation() override
+        {
+            
+        }
+    }
+
+    
 
    
 }//namespace
