@@ -103,7 +103,22 @@ module
         %c3 = arith.constant 3 : i32
         %b = arith.muli %a, %c3 : i32
         
-        retur
+        return
+    }
+
+    func.func @cse1(%x : i32, %y : i32) -> i32
+    {
+        %a = arith.addi %x, %y : i32
+        %b = arith.addi %y, %x : i32
+        %c = arith.muli %a, %b : i32
+        return %c : i32
+    }
+
+    func.func @cse2(%x : i32, %y: i32) -> i32
+    {
+        %a = arith.addi %x, %y : i32
+        %c = arith.muli %a, %a : i32
+        return %c : i32
     }
 
 }

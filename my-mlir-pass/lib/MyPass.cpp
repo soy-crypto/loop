@@ -6,6 +6,12 @@
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "llvm/ADT/StringMap.h"
+
+#include <string>
+#include <cstdint>
+#include <sstream>
+
 
 using namespace mlir;
 
@@ -181,7 +187,6 @@ namespace
 
     };
 
-    //Pass
     //pass - patterns
     struct MyPass : PassWrapper<MyPass, OperationPass<ModuleOp>>
     {
@@ -578,7 +583,7 @@ namespace
             //Check validity
             if(func == nullptr)
             {
-                return {};
+                return llvm::DenseMap<Operation*, int64_t>();
             }
             
             //Get all deadOps of current funct
@@ -719,9 +724,9 @@ namespace
     }; // CF pass
 
     //pass - CSE
-    struc CSEPass : PassWrapper<CSEPass, OperationPass<ModuleOp>>
+    struct CSEPass : PassWrapper<CSEPass, OperationPass<ModuleOp>>
     {
-        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CFPass);
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CSEPass);
         
         StringRef getArgument() const override
         {
@@ -745,7 +750,7 @@ namespace
                 }
 
                 //cse deletion
-                llvm::DenseMap<Operation*, Operation*> cseOps = {};
+                llvm::DenseMap<Operation*, Operation*> cseOps;
                 bool deleted = true;
                 while(true)
                 {
@@ -772,7 +777,7 @@ namespace
                     }//
                     else
                     {
-                        delted = false;
+                        deleted = false;
                     }
 
                 }//while
@@ -780,41 +785,77 @@ namespace
 
             });//
 
+            //Return
+            return;
 
         }//void
 
         //get cse ops
-        llvm::DenseMap<Operatoion*, Operation*> getCseOps(func::FuncOp func)
+        llvm::DenseMap<Operation*, Operation*> getCseOps(func::FuncOp func)
         {
             //check validity
             if(func == nullptr)
             {
-                return {};
+                return llvm::DenseMap<Operation*, Operation*>();
             }
 
             //get cse ops
-            llvm::DenseMap<Operation*, Operation*> cseOps = {};
-            SmallVector<String> firstOp = {};
-            func->walk([firstOp, cseOps](Operation* op)
+            llvm::DenseMap<Operation*, Operation*> cseOps;
+            llvm::StringMap<Operation*> firstOps;
+            func->walk([&firstOps, &cseOps](Operation* op)
             {
                 //checking validity
-                if(op == nullptr)
+                if(op == nullptr || op->getNumOperands() != 2)
                 {
                     return;
                 }
 
                 //get cse ops
+                std::string opName = op->getName().getStringRef().str();
+
                 auto operands = op->getOperands();
-                String key1 = op->getRefName() + "-" + operands[0] + "-" + operands[1];
-                String key2 = op->getRefName() + "-" + operands[1] + "-" + operands[0];
-                if(!firstOp.contains(key1) && firstOp.contains(key2))
+                std::ostringstream s1, s2;
+                s1 << opName << "-" << operands[0].getAsOpaquePointer() << "-" << operands[1].getAsOpaquePointer();
+                s2 << opName << "-" << operands[1].getAsOpaquePointer() << "-" << operands[0].getAsOpaquePointer();
+                std::string key1 = opName + "-" + s1.str();
+                std::string key2 = opName + "-" + s2.str();
+
+                if(isa<arith::AddIOp>(op) || isa<arith::MulIOp>(op))
                 {
-                    firstOp.push_back(op);
-                    cseOps[op] = 
-                    
+                    if(firstOps.contains(key1))
+                    {
+                        cseOps[op] = firstOps[key1];
+                    }
+                    else if(firstOps.contains(key2))
+                    {
+                        cseOps[op] = firstOps[key2];
+                    }
+                    else
+                    {
+                        firstOps[key1] = op;
+                        firstOps[key2] = op;
+                    }
+
                 }
-                
+                else if(isa<arith::SubIOp>(op) || isa<arith::DivSIOp>(op) || isa<arith::RemSIOp>(op))
+                {
+                    if(firstOps.contains(key1))
+                    {
+                        cseOps[op] = firstOps[key1];
+                    }
+                    else
+                    {
+                        firstOps[key1] = op;
+                    }
+
+                }
+
+                //Return
+                return;
             });
+
+            //Return
+            return cseOps;
 
         }//get cse ops
 
@@ -835,4 +876,5 @@ void registerMyPass()
     PassRegistration<LICMPass>();
     PassRegistration<DCEPass>();
     PassRegistration<CFPass>();
+    PassRegistration<CSEPass>();
 }
