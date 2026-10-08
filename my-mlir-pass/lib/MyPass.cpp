@@ -787,7 +787,6 @@ namespace
 
             //Return
             return;
-
         }//void
 
         //get cse ops
@@ -858,11 +857,10 @@ namespace
             return cseOps;
 
         }//get cse ops
-
  
     };// Pass
 
-    //pass - Instant Combine
+    //pass - IC(Instant Combine)
     struct ICPass : PassWrapper<ICPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ICPass);
@@ -879,9 +877,68 @@ namespace
 
         void runOnOperation() override
         {
+            getOperation()->walk([this](func::FuncOp func)
+            {
+                //check validity
+                if(func == nullptr)
+                {
+                    return;
+                }
+
+                //delete IC ops
+                this->deleteICOps(this->getICOps(func));
+
+                //Return
+                return;
+
+            });
+
+        }
+
+        SmallVector<Operation*> getICOps(func)
+        {
+            //check validity
+            if(func == nullptr)
+            {
+                return {};
+            }
+
+            //get IC Ops
+            SmallVector<Operation*> icOps;
+            func.walk([icOps](Operation* op)
+            {
+                //check validity
+                if(op == nullptr || op->getNumOperands() != 2)
+                {
+                    return;
+                }
+
+                //get IC ops
+                auto operands = op->getOperands();
+                if(this->isConstant(operands[0], 0))
+                {
+
+                }
+                else if(this->isConstant(operands[1], 0))
+                {
+
+                }
+
+                //return
+                return;
+
+            });
+
+            //return
+            return;
+        }
+
+        void deleteICOps(SmallVector<Operation*> icOps)
+        {
             
         }
-    }
+
+    }; // ICPass
 
     
 
@@ -898,4 +955,5 @@ void registerMyPass()
     PassRegistration<DCEPass>();
     PassRegistration<CFPass>();
     PassRegistration<CSEPass>();
+    PassRegistration<ICPass>();
 }
