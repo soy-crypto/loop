@@ -11,7 +11,7 @@
 #include <string>
 #include <cstdint>
 #include <sstream>
-
+#include <utility>
 
 using namespace mlir;
 
@@ -1151,6 +1151,76 @@ namespace
         }//
 
     }; // ICPass
+
+    //pass - IC with pattern
+    struct AddZeroPattern : OpRewritePattern<arith::AddIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
+        {
+            //get left and right defingin OPs and their attrs
+            auto ldefOp = op.getLhs().getDefiningOp<arith::ConstantOp>();
+            auto rdefOp = op.getRhs().getDefiningOp<arith::ConstantOp>();
+            auto lConstAttr = ldefOp ? dyn_cast<IntegerAttr>(ldefOp.getValue()) : nullptr;
+            auto rConstAttr = rdefOp ? dyn_cast<IntegerAttr>(rdefOp.getValue()) : nullptr;
+            
+            //check which zero patterns
+            if(lConstAttr && lConstAttr.getValue() == 0)
+            {
+                rewriter.replaceOp(op, op.getRhs());
+                return success();
+            }
+            else if(rConstAttr && rConstAttr.getValue() == 0)
+            {
+                rewriter.replaceOp(op, op.getLhs());
+                return success();
+            }
+
+            //return
+            return failure();
+
+        }//
+
+    };
+
+    struct ICPatternPass : PassWrapper<ICPatternPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ICPatternPass);
+
+        StringRef getArgument() const override
+        {
+            return "icpattern";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "icpattern elimination!";
+        }
+
+        void runOnOperation() override
+        {
+            //Init
+            RewritePatternSet patterns(&getContext());
+            patterns.add<AddZeroPattern>(&getContext());
+
+            //greedy traverse
+            GreedyRewriteConfig config;
+            config.enableFolding(false);
+
+            //perform pattern
+            if(failed(applyPatternsGreedily(getOperation(), std::move(patterns), config)))
+            {
+                signalPassFailure();
+            }//
+
+            //return
+            return;
+
+        }//void
+
+    };
+    
    
 }//namespace
 
@@ -1165,4 +1235,5 @@ void registerMyPass()
     PassRegistration<CFPass>();
     PassRegistration<CSEPass>();
     PassRegistration<ICPass>();
+    PassRegistration<ICPatternPass>();
 }
