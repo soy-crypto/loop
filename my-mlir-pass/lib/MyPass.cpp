@@ -1028,8 +1028,24 @@ namespace
             bool deleted = false;
             if(!icOps.empty())
             {
+                //update icOps first
+                for(auto &[op1, v1] : icOps)
+                {
+                    for(auto &[op2, v2] : icOps)
+                    {
+                        if(v2 == op1.getResult(0))
+                        {
+                            v2 = v1;
+                        }
+
+                    }   
+
+                }
+                
+                //delete ic ops
                 for(auto &[op, variable] : icOps)
                 {
+                    //update the result of op in the icOps
                     op->getResult(0).replaceAllUsesWith(variable);
                     op->erase();
                 }
