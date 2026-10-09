@@ -885,8 +885,35 @@ namespace
                     return;
                 }
 
-                //delete IC ops
-                this->deleteICOps(this->getICOps(func));
+                //delete  zero IC ops
+                bool deleted = true;
+                while(true)
+                {
+                    //tc
+                    if(deleted == false)
+                    {
+                        break;
+                    }
+
+                    //delete icOps
+                    deleted = this->deleteICOps(this->getZeroICOps(func));
+
+                }//
+
+                //delete one IC ops
+                delted = true;
+                while(true)
+                {
+                    //tc
+                    if(deleted == false)
+                    {
+                        break;
+                    }
+
+                    //delete icOps
+                    deleted = this->deleteICOps(this->getOneICOps(func));
+
+                }//
 
                 //Return
                 return;
@@ -895,7 +922,7 @@ namespace
 
         }
 
-        SmallVector<Operation*> getICOps(func)
+        llvm::DenseMap<Operation*, int64_t> getZeroICOps(func)
         {
             //check validity
             if(func == nullptr)
@@ -904,7 +931,7 @@ namespace
             }
 
             //get IC Ops
-            SmallVector<Operation*> icOps;
+            llvm::DenseMap<Operation*, int64_t> icOps;
             func.walk([icOps](Operation* op)
             {
                 //check validity
@@ -914,21 +941,42 @@ namespace
                 }
 
                 //get IC ops
-                ICZero(op->getOperands());
-                ICOne(op->getOperands());
+                auto operands = op->getOperands();
+                Value newOperand;
+                if(isZero(operands[0]))
+                {
+                    newOperand = lhsZeroIC(op, operands[0]);
+                    icOps[op] = newOperand;
+                }
+                else if(isZero(operands[1]))
+                {
+                    newOperand = rhsZeroIC(op, operands[1]);
+                    icOps[op] = newOperand;
+                }
 
                 //return
                 return;
-
             });
 
             //return
-            return;
+            return icOps;
+
+        }//getZeroICOps
+
+        llvm::DenseMap<Operation*, int64_t> getOneICOps(func)
+        {
         }
 
-        void deleteICOps(SmallVector<Operation*> icOps)
+        void deleteICOps(llvm::DenseMap<Operation*, int64_t> icOps)
         {
-            
+            //Check validity
+            if(icOps == nullptr)
+            {
+                return;
+            }
+
+            //
+
         }
 
         bool isZero(Value operand)
