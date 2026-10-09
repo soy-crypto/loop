@@ -901,7 +901,7 @@ namespace
                 }//
 
                 //delete one IC ops
-                delted = true;
+                deleted = true;
                 while(true)
                 {
                     //tc
@@ -922,17 +922,17 @@ namespace
 
         }
 
-        llvm::DenseMap<Operation*, int64_t> getZeroICOps(func)
+        llvm::DenseMap<Operation*, Value> getZeroICOps(func::FuncOp func)
         {
             //check validity
             if(func == nullptr)
             {
-                return {};
+                return llvm::DenseMap<Operation*, Value>();
             }
 
             //get IC Ops
-            llvm::DenseMap<Operation*, int64_t> icOps;
-            func.walk([icOps](Operation* op)
+            llvm::DenseMap<Operation*, Value> icOps;
+            func.walk([this, &icOps](Operation* op)
             {
                 //check validity
                 if(op == nullptr || op->getNumOperands() != 2)
@@ -942,16 +942,19 @@ namespace
 
                 //get IC ops
                 auto operands = op->getOperands();
-                Value newOperand;
+                Value newValue;
                 if(isZero(operands[0]))
                 {
-                    newOperand = lhsZeroIC(op, operands[0]);
-                    icOps[op] = newOperand;
+                    newValue = this->leftZeroCompute(op);
                 }
                 else if(isZero(operands[1]))
                 {
-                    newOperand = rhsZeroIC(op, operands[1]);
-                    icOps[op] = newOperand;
+                    newValue = this->rightZeroCompute(op);
+                }
+                
+                if(newValue != nullptr)
+                {
+                    icOps[op] = newValue;
                 }
 
                 //return
@@ -963,11 +966,49 @@ namespace
 
         }//getZeroICOps
 
-        llvm::DenseMap<Operation*, int64_t> getOneICOps(func)
+        llvm::DenseMap<Operation*, Value> getOneICOps(func::FuncOp func)
         {
-        }
+            //check validity
+            if(func == nullptr)
+            {
+                return llvm::DenseMap<Operation*, Value>();
+            }
 
-        void deleteICOps(llvm::DenseMap<Operation*, int64_t> icOps)
+            //get One ICOps
+            llvm::DenseMap<Operation*, Value> oneICOps;
+            func.walk([this, &oneICOps](Operation* op)
+            {
+                //check validity
+                if(op == nullptr || op-getNumOperands() != 2)
+                {
+                    return;
+                }
+
+                //check operands are one or not
+                auto operands = op-getOperands();
+                Value newValue;
+                if(isOne(operands[0]) && isa<arith::MulIOp>(op))
+                {
+                    newValue = operands[1];
+                }
+                else if(isOne(operands[1]) && isa<arith::MulIOp>(op))
+                {
+                    newValue = operands[0];
+                }
+                
+                //update oneICOps
+                if(newValue != nullptr)
+                {
+                    oneICOps[op] = newValue;
+                }
+
+                //Return
+                return oneICOps;
+            });
+
+        }//getOneICOps
+
+        void deleteICOps(llvm::DenseMap<Operation*, Value> icOps)
         {
             //Check validity
             if(icOps == nullptr)
@@ -975,8 +1016,15 @@ namespace
                 return;
             }
 
-            //
+            //delete ops
+            for(auto &[op, variable] : icOps)
+            {
+                op->getResult(0).replaceAllUsesWith(variable);
+                op->erase();
+            }
 
+            //return
+            return;
         }
 
         bool isZero(Value operand)
@@ -1000,6 +1048,83 @@ namespace
             return flag;
         }
 
+        bool isOne(Value operand)
+        {
+            //check validity
+            if(operand == nullptr)
+            {
+                return false;
+            }
+
+            //check
+            bool flag = false;
+            auto defOp = operand.getDefininigOp<arith::ConstantOp>();
+            auto attr = dyn_cast<IntegerAttr>(defOp.getValue());
+            if(defOP && attr == 1)
+            {
+                flag = true;
+            }
+
+            //Return
+            return flag;
+        }
+
+        Value leftZeroCompute(Operation* op)
+        {
+            //check validity
+            if(op == nullptr || operand == nullptr)
+            {
+                return nullptr;
+            }
+
+            //compute
+            Value result;
+            auto operands = op->getOperands();
+            if(isa<arith::AddIOp>(op))
+            {
+                result = operands[1];
+            }
+            else if(isa<arith::MulIOp>(op))
+            {
+                result = operands[0];
+            }
+            else if(isa<arith::DivSIOp>(op))
+            {
+                result = operands[0];
+            }
+
+            //Return
+            return result;
+
+        }//Value
+
+        Value rightZeroCompute(Operation* op)
+        {
+            //check validity
+            if(op == nullptr || operand == nullptr)
+            {
+                return nullptr;
+            } 
+
+            //compute
+            auto operands = op->getOperands();
+            Value result;
+            if(isa<arith::AddIOp>(op))
+            {
+                result = operands[0];
+            }
+            else if(isa<arith::MulIOp>(op))
+            {
+                result = operands[1];
+            }
+            else if(isa<arith::SubIOp>(op))
+            {
+                result = operands[0];
+            }
+
+            //Return
+            return result;
+        }//
 
     }; // ICPass
 
