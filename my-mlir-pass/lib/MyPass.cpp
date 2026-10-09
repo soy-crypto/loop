@@ -1051,7 +1051,8 @@ namespace
                 }
 
                 icOps.clear();
-
+                
+                //update delted status
                 deleted = true;
             }//
 
