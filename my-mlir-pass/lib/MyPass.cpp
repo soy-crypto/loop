@@ -885,7 +885,7 @@ namespace
                     return;
                 }
 
-                //delete  zero IC ops
+                //delete zero IC ops
                 bool deleted = true;
                 while(true)
                 {
