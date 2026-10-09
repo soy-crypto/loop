@@ -17,205 +17,7 @@ using namespace mlir;
 
 namespace
 {
-    //Patterns
-    // x + 0 -> x
-    struct AddZeroPattern : public OpRewritePattern<arith::AddIOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
-        {
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-
-            if(lcst != nullptr && lcst.value() == 0)
-            {
-                rewriter.replaceOp(op, lhs);
-                return success();
-            }
-
-            if(rcst != nullptr && rcst.value() == 0)
-            {
-                rewriter.replaceOp(op, rhs);
-                return success();
-            }
-
-            return failure();
-        }
-
-    };
-    
-    // x * 1 -> x
-    struct MulOnePattern : OpRewritePattern<arith::MulIOp>
-    {
-        using OpRewritePattern:: OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
-        {
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-
-            if(lcst != nullptr && lcst.value() == 1)
-            {
-                rewriter.replaceOp(op, lhs);
-                return success();
-            }
-
-            if(rcst != nullptr && rcst.value() == 1)
-            {
-                rewriter.replaceOp(op, rhs);
-                return success();
-            }
-
-            //return
-            return failure();
-        }//logcial
-
-    };
-
-    // const + const -> const
-    struct ConstantFoldPattern : OpRewritePattern<arith::AddIOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
-        {
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-
-            if(lcst != nullptr && rcst != nullptr)
-            {
-                int64_t result = lcst.value() + rcst.value();
-                auto newConst = rewriter.create<arith::ConstantIntOp>(op.getLoc(), result, 32);
-                rewriter.replaceOp(op, newConst);
-                return success();
-            }
-            else
-            {
-                return failure();
-            }
-
-        }
-
-    };//
-
-    // x * 0 -> 0
-    struct MulZeroPattern : OpRewritePattern<arith::MulIOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
-        {
-            //get left oprand and right oprand
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-            
-            //check
-            if(lcst != nullptr && lcst.value() == 0)
-            {
-                rewriter.replaceOp(op, lhs);
-                return success();
-            }
-            else if(rcst != nullptr && rcst.value() == 0)
-            {
-                rewriter.replaceOp(op, rhs);
-                return success();
-            }
-            else
-            {
-                return failure();
-            }
-            
-        }
-
-    }; 
-
-    // *0 pattern
-    struct SubSelfPattern : OpRewritePattern<arith::SubIOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::SubIOp op, PatternRewriter &rewriter) const override
-        {
-            //get left and right operands
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-
-            if(lhs == rhs)
-            {
-                auto zero = rewriter.create<arith::ConstantIntOp>(op.getLoc(), 0, 32);
-                rewriter.replaceOp(op, zero);
-                return success();
-            }
-            else
-            {
-                return failure();
-            }
-
-        }//
-
-    };
-
-    struct ConstantMulFoldPattern : OpRewritePattern<arith::MulIOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-
-        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
-        {
-            auto lhs = op.getLhs(), rhs = op.getRhs();
-            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
-            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
-
-            if(lcst != nullptr && rcst != nullptr)
-            {
-                llvm::outs() << "Found constant muli\n";
-                auto newValue = rewriter.create<arith::ConstantIntOp>(op.getLoc(), lcst.value() * rcst.value(), 32);
-                rewriter.replaceOp(op, newValue);
-                return success();
-            }
-            else
-            {
-                return failure();
-            }
-
-        }
-
-    };
-
-    //pass - patterns
-    struct MyPass : PassWrapper<MyPass, OperationPass<ModuleOp>>
-    {
-        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(MyPass);
-
-        StringRef getArgument() const override
-        {
-            return "pass";
-        }
-
-        StringRef getDescription() const override
-        {
-            return "Simple MLIR optimizaiton pass";
-        }
-        
-        void runOnOperation() override
-        {
-            RewritePatternSet patterns(&getContext());
-            patterns.add<AddZeroPattern, MulOnePattern, ConstantFoldPattern, MulZeroPattern, SubSelfPattern, ConstantMulFoldPattern>(&getContext());
-            if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
-            {
-                signalPassFailure();
-            }
-            
-        }
-
-    };
-
-    //pass2
+    //pass - 
     struct PrintOpsPass : PassWrapper<PrintOpsPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(PrintOpsPass);
@@ -227,8 +29,17 @@ namespace
 
         void runOnOperation() override
         {
-            getOperation()->walk([](arith::AddIOp op) { llvm::outs() << "ADD: " << op << "\n"; });
-            getOperation()->walk([](arith::MulIOp op) { llvm::outs() << "MUL: " << op << "\n"; });
+            getOperation()->walk([](arith::AddIOp op) 
+            { 
+                llvm::outs() << "ADD: " << op << "\n"; 
+            });
+
+
+            getOperation()->walk([](arith::MulIOp op) 
+            {
+                llvm::outs() << "MUL: " << op << "\n"; 
+            });
+              
         }
 
     };
@@ -1153,6 +964,7 @@ namespace
     }; // ICPass
 
     //pass - IC with pattern
+    // x + 0 -> x
     struct AddZeroPattern : OpRewritePattern<arith::AddIOp>
     {
         using OpRewritePattern::OpRewritePattern;
@@ -1160,18 +972,16 @@ namespace
         LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
         {
             //get left and right defingin OPs and their attrs
-            auto ldefOp = op.getLhs().getDefiningOp<arith::ConstantOp>();
-            auto rdefOp = op.getRhs().getDefiningOp<arith::ConstantOp>();
-            auto lConstAttr = ldefOp ? dyn_cast<IntegerAttr>(ldefOp.getValue()) : nullptr;
-            auto rConstAttr = rdefOp ? dyn_cast<IntegerAttr>(rdefOp.getValue()) : nullptr;
+            auto ldefOp = op.getLhs().getDefiningOp<arith::ConstantIntOp>();
+            auto rdefOp = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
             
             //check which zero patterns
-            if(lConstAttr && lConstAttr.getValue() == 0)
+            if(ldefOp && ldefOp.value() == 0)
             {
                 rewriter.replaceOp(op, op.getRhs());
                 return success();
             }
-            else if(rConstAttr && rConstAttr.getValue() == 0)
+            else if(rdefOp && rdefOp.value() == 0)
             {
                 rewriter.replaceOp(op, op.getLhs());
                 return success();
@@ -1181,6 +991,147 @@ namespace
             return failure();
 
         }//
+
+    };
+
+    // x * 1 -> x
+    struct MulOnePattern : OpRewritePattern<arith::MulIOp>
+    {
+        using OpRewritePattern:: OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
+        {
+            auto lhs = op.getLhs(), rhs = op.getRhs();
+            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
+            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
+
+            if(lcst && lcst.value() == 1)
+            {
+                rewriter.replaceOp(op, rhs);
+                return success();
+            }
+            else if(rcst && rcst.value() == 1)
+            {
+                rewriter.replaceOp(op, lhs);
+                return success();
+            }
+
+            //return
+            return failure();
+
+        }//logcial
+
+    };
+
+    // constant * constant -> constant
+    struct ConstantFoldPattern : OpRewritePattern<arith::AddIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::AddIOp op, PatternRewriter &rewriter) const override
+        {
+            auto lhs = op.getLhs(), rhs = op.getRhs();
+            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
+            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
+
+            if(lcst != nullptr && rcst != nullptr)
+            {
+                int64_t result = lcst.value() + rcst.value();
+                auto newConst = rewriter.create<arith::ConstantIntOp>(op.getLoc(), result, 32);
+                rewriter.replaceOp(op, newConst);
+                return success();
+            }
+            else
+            {
+                return failure();
+            }
+
+        }
+
+    };//
+
+    // x * 0 -> 0
+    struct MulZeroPattern : OpRewritePattern<arith::MulIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
+        {
+            //get left oprand and right oprand
+            auto lhs = op.getLhs(), rhs = op.getRhs();
+            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
+            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
+            
+            //check
+            if(lcst != nullptr && lcst.value() == 0)
+            {
+                rewriter.replaceOp(op, lhs);
+                return success();
+            }
+            else if(rcst != nullptr && rcst.value() == 0)
+            {
+                rewriter.replaceOp(op, rhs);
+                return success();
+            }
+            else
+            {
+                return failure();
+            }
+            
+        }
+
+    }; 
+
+    // *0 pattern
+    struct SubSelfPattern : OpRewritePattern<arith::SubIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::SubIOp op, PatternRewriter &rewriter) const override
+        {
+            //get left and right operands
+            auto lhs = op.getLhs(), rhs = op.getRhs();
+            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
+            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
+
+            if(lhs == rhs)
+            {
+                auto zero = rewriter.create<arith::ConstantIntOp>(op.getLoc(), 0, 32);
+                rewriter.replaceOp(op, zero);
+                return success();
+            }
+            else
+            {
+                return failure();
+            }
+
+        }//
+
+    };
+
+    struct ConstantMulFoldPattern : OpRewritePattern<arith::MulIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::MulIOp op, PatternRewriter &rewriter) const override
+        {
+            auto lhs = op.getLhs(), rhs = op.getRhs();
+            auto lcst = lhs.getDefiningOp<arith::ConstantIntOp>();
+            auto rcst = rhs.getDefiningOp<arith::ConstantIntOp>();
+
+            if(lcst != nullptr && rcst != nullptr)
+            {
+                llvm::outs() << "Found constant muli\n";
+                auto newValue = rewriter.create<arith::ConstantIntOp>(op.getLoc(), lcst.value() * rcst.value(), 32);
+                rewriter.replaceOp(op, newValue);
+                return success();
+            }
+            else
+            {
+                return failure();
+            }
+
+        }
 
     };
 
@@ -1203,6 +1154,10 @@ namespace
             //Init
             RewritePatternSet patterns(&getContext());
             patterns.add<AddZeroPattern>(&getContext());
+            patterns.add<MulOnePattern>(&getContext());
+            patterns.add<ConstantFoldPattern>(&getContext());
+            patterns.add<SubSelfPattern>(&getContext());
+            patterns.add<ConstantMulFoldPattern>(&getContext());
 
             //greedy traverse
             GreedyRewriteConfig config;
