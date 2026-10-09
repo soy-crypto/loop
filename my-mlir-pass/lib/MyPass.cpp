@@ -1038,14 +1038,13 @@ namespace
                             v2 = v1;
                         }
 
-                    }   
+                    }//for
 
-                }
+                }//for
                 
                 //delete ic ops
                 for(auto &[op, variable] : icOps)
                 {
-                    //update the result of op in the icOps
                     op->getResult(0).replaceAllUsesWith(variable);
                     op->erase();
                 }
