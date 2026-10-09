@@ -1127,9 +1127,6 @@ namespace
         }//
 
     }; // ICPass
-
-    
-
    
 }//namespace
 
