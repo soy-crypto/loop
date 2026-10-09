@@ -1033,7 +1033,7 @@ namespace
                 {
                     for(auto &[op2, v2] : icOps)
                     {
-                        if(v2 == op1.getResult(0))
+                        if(v2 == op1->getResult(0))
                         {
                             v2 = v1;
                         }
