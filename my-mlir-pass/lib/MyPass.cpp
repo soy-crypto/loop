@@ -1019,44 +1019,36 @@ namespace
         bool deleteICOps(llvm::DenseMap<Operation*, Value> icOps)
         {
             //Check validity
-            if(icOps == nullptr)
+            if(icOps.empty())
             {
-                return;
+                return false;
             }
 
-            //delete ops
-            bool deleted = false;
-            if(!icOps.empty())
+            //update icOps first
+            for(auto &[op1, v1] : icOps)
             {
-                //update icOps first
-                for(auto &[op1, v1] : icOps)
+                for(auto &[op2, v2] : icOps)
                 {
-                    for(auto &[op2, v2] : icOps)
+                    if(v2 == op1->getResult(0))
                     {
-                        if(v2 == op1->getResult(0))
-                        {
-                            v2 = v1;
-                        }
-
-                    }//for
+                        v2 = v1;
+                    }
 
                 }//for
-                
-                //delete ic ops
-                for(auto &[op, variable] : icOps)
-                {
-                    op->getResult(0).replaceAllUsesWith(variable);
-                    op->erase();
-                }
 
-                icOps.clear();
-                
-                //update delted status
-                deleted = true;
-            }//
+            }//for
+            
+            //delete ic ops
+            for(auto &[op, variable] : icOps)
+            {
+                op->getResult(0).replaceAllUsesWith(variable);
+                op->erase();
+            }
+
+            icOps.clear();
 
             //return
-            return deleted;
+            return true;
         }
 
         bool isZero(Value operand)
