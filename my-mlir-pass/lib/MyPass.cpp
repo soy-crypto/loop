@@ -942,14 +942,19 @@ namespace
 
                 //get IC ops
                 auto operands = op->getOperands();
+                bool flag1 = isZero(operands[0]), flag2 = isZero(operands[1]);
                 Value newValue;
-                if(isZero(operands[0]))
+                if(flag1 && !flag2)
                 {
                     newValue = this->leftZeroCompute(op);
                 }
-                else if(isZero(operands[1]))
+                else if(!flag1 && flag2)
                 {
                     newValue = this->rightZeroCompute(op);
+                }
+                else if(flag1 && flag2)
+                {
+                    newValue = operands[0];
                 }
                 
                 if(newValue != nullptr)
@@ -979,19 +984,19 @@ namespace
             func.walk([this, &oneICOps](Operation* op)
             {
                 //check validity
-                if(op == nullptr || op-getNumOperands() != 2)
+                if(op == nullptr || op->getNumOperands() != 2)
                 {
                     return;
                 }
 
                 //check operands are one or not
-                auto operands = op-getOperands();
+                auto operands = op->getOperands();
                 Value newValue;
                 if(isOne(operands[0]) && isa<arith::MulIOp>(op))
                 {
                     newValue = operands[1];
                 }
-                else if(isOne(operands[1]) && isa<arith::MulIOp>(op))
+                else if(isOne(operands[1]) && (isa<arith::MulIOp>(op) || isa<arith::DivSIOp>(op)))
                 {
                     newValue = operands[0];
                 }
@@ -1003,12 +1008,15 @@ namespace
                 }
 
                 //Return
-                return oneICOps;
+                return;
             });
+
+            //return
+            return oneICOps;
 
         }//getOneICOps
 
-        void deleteICOps(llvm::DenseMap<Operation*, Value> icOps)
+        bool deleteICOps(llvm::DenseMap<Operation*, Value> icOps)
         {
             //Check validity
             if(icOps == nullptr)
@@ -1017,20 +1025,28 @@ namespace
             }
 
             //delete ops
-            for(auto &[op, variable] : icOps)
+            bool deleted = false;
+            if(!icOps.empty())
             {
-                op->getResult(0).replaceAllUsesWith(variable);
-                op->erase();
-            }
+                for(auto &[op, variable] : icOps)
+                {
+                    op->getResult(0).replaceAllUsesWith(variable);
+                    op->erase();
+                }
+
+                icOps.clear();
+
+                deleted = true;
+            }//
 
             //return
-            return;
+            return deleted;
         }
 
         bool isZero(Value operand)
         {
             //Check validity
-            if(operand == nullptr)
+            if(operand == nullptr || !operand.getDefiningOp<arith::ConstantOp>())
             {
                 return false;
             }
@@ -1039,7 +1055,7 @@ namespace
             bool flag = false;
             auto defOp = operand.getDefiningOp<arith::ConstantOp>();
             auto attr = dyn_cast<IntegerAttr>(defOp.getValue());
-            if(defOp && attr == 0)
+            if(attr && attr.getValue() == 0)
             {
                 flag = true;
             }
@@ -1051,16 +1067,16 @@ namespace
         bool isOne(Value operand)
         {
             //check validity
-            if(operand == nullptr)
+            if(operand == nullptr || !operand.getDefiningOp<arith::ConstantOp>())
             {
                 return false;
             }
 
             //check
             bool flag = false;
-            auto defOp = operand.getDefininigOp<arith::ConstantOp>();
+            auto defOp = operand.getDefiningOp<arith::ConstantOp>();
             auto attr = dyn_cast<IntegerAttr>(defOp.getValue());
-            if(defOP && attr == 1)
+            if(attr && attr.getValue() == 1)
             {
                 flag = true;
             }
@@ -1072,7 +1088,7 @@ namespace
         Value leftZeroCompute(Operation* op)
         {
             //check validity
-            if(op == nullptr || operand == nullptr)
+            if(op == nullptr)
             {
                 return nullptr;
             }
@@ -1101,7 +1117,7 @@ namespace
         Value rightZeroCompute(Operation* op)
         {
             //check validity
-            if(op == nullptr || operand == nullptr)
+            if(op == nullptr)
             {
                 return nullptr;
             } 
