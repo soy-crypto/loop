@@ -1109,6 +1109,26 @@ namespace
 
     };
 
+    // / 1 pattern
+    struct DividOnePattern : OpRewritePattern<arith::DivSIOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+
+        LogicalResult matchAndRewrite(arith::DivSIOp op, PatternRewriter &rewriter) const override
+        {
+            auto rdefOp = op.getRhs().getDefiningOp<arith::ConstantIntOp>();
+            if(rdefOp && rdefOp.value() == 1)
+            {
+                rewriter.replaceOp(op, op.getLhs());
+                return success();  
+            }
+
+            return failure();
+
+        }//
+
+    };
+
     struct ConstantMulFoldPattern : OpRewritePattern<arith::MulIOp>
     {
         using OpRewritePattern::OpRewritePattern;
@@ -1158,6 +1178,7 @@ namespace
             patterns.add<ConstantFoldPattern>(&getContext());
             patterns.add<SubSelfPattern>(&getContext());
             patterns.add<ConstantMulFoldPattern>(&getContext());
+            patterns.add<DividOnePattern>(&getContext());
 
             //greedy traverse
             GreedyRewriteConfig config;
@@ -1182,7 +1203,6 @@ namespace
 //Register
 void registerMyPass()
 {
-    PassRegistration<MyPass>();
     PassRegistration<PrintOpsPass>();
     PassRegistration<FunctionStatsPass>();
     PassRegistration<LICMPass>();
