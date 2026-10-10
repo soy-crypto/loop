@@ -58,5 +58,31 @@ module
 
         return %result : tensor<2x5xf32>
     }
+
+    func.func @elementwise_add(%a : tensor<2x4xf32>, %b : tensor<2x4xf32>, %init : tensor<2x4xf32>) -> tensor<2x4xf32>
+    {
+        %result = linalg.generic
+        {
+            indexing_maps = [
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>
+            ],
+
+            iterator_types = ["parallel", "parallel"]
+        }
+
+        ins(%a, %b : tensor<2x4xf32>, tensor<2x4xf32>)
+        outs(%init : tensor<2x4xf32>)
+
+        {
+            ^bb0(%aElement : f32, %bElement : f32, %old : f32):
+                %sum = arith.addf %aElement, %bElement : f32
+                linalg.yield %sum : f32
+        }
+        -> tensor<2x4xf32>
+
+        return %result : tensor<2x4xf32>
+    }
     
-}
+}//module
