@@ -1215,14 +1215,16 @@ namespace
 
         void runOnOperation() override
         {
-            getOperation()->walk([](linalg::MatmulOp op)
+            getOperation()->walk([](linalg::LinalgOp op)
             {
+                llvm::errs() << "operation: " << op.getOperation()->getName() << "\n";
+
                 //print type
-                auto operands = op.getOperands();
+                auto operands = op.getOperation()->getOperands();
                 llvm::errs() << "A: " << operands[0].getType() << "\n";
                 llvm::errs() << "B: " << operands[1].getType() << "\n";
                 llvm::errs() << "C: " << operands[2].getType() << "\n";
-                for(Value result : op.getResults())
+                for(Value result : op.getOperation()->getResults())
                 {
                     llvm::errs() << "Result: " << result.getType() << "\n";
                 }
@@ -1245,8 +1247,9 @@ namespace
                 auto iteratorTypes = op.getIteratorTypesArray();
                 for(unsigned index = 0; index < iteratorTypes.size(); index++)
                 {
-                    llvm::errs() << "Loop: " << index << ": " << utils::stringifyIteratorType(iteratorTypes[index]) << "\n";
+                    llvm::errs() << "LLoop: " << index << ": " << utils::stringifyIteratorType(iteratorTypes[index]) << "\n";
                 }
+                llvm::outs() << "\n";
                 
             });
 

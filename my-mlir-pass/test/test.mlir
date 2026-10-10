@@ -37,7 +37,7 @@ module
         return %result : tensor<2x4xf32>
     }
 
-    func.func @matmul_generic(%a : tensor<2x3xf32>, %b : tensor<3x4xf32>, %init : tensor<2x4xf32>) -> tensor<2x4xf32>
+    func.func @matmul_generic(%a : tensor<2x5xf32>, %b : tensor<5x5xf32>, %init : tensor<2x5xf32>) -> tensor<2x5xf32>
     {
         %result = linalg.generic
         {
@@ -47,16 +47,16 @@ module
                 affine_map<(i, j, k) -> (i, j)>],
             iterator_types = ["parallel", "parallel", "reduction"]
         }
-        ins(%a, %b : tensor<2x3xf32>, tensor<3x4xf32>)
-        outs(%init : tensor<2x4xf32>)
+        ins(%a, %b : tensor<2x5xf32>, tensor<5x5xf32>)
+        outs(%init : tensor<2x5xf32>)
         {
             ^bb0(%aElement: f32, %bElement: f32, %acc: f32):
                 %product = arith.mulf %aElement, %bElement : f32
                 %sum = arith.addf %acc, %product : f32
                 linalg.yield %sum : f32
-        } -> tensor<2x4xf32>
+        } -> tensor<2x5xf32>
 
-        return %result : tensor<2x4xf32>
+        return %result : tensor<2x5xf32>
     }
     
 }
