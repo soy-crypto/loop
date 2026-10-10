@@ -84,5 +84,55 @@ module
 
         return %result : tensor<2x4xf32>
     }
+
+    func.func @add_then_mul(%a : tensor<2x4xf32>, %b : tensor<2x4xf32>, %scale : tensor<2x4xf32>, %init : tensor<2x4xf32>) -> tensor<2x4xf32>
+    {
+        //addtion
+        %sumTensor = linalg.generic
+        {
+            indexing_maps = [
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>
+            ],
+
+            iterator_types = ["parallel", "parallel"]
+        }
+
+        ins(%a, %b : tensor<2x4xf32>, tensor<2x4xf32>)
+        outs(%init : tensor<2x4xf32>)
+
+        {
+            ^bb0(%aElement : f32, %bElement : f32, %old : f32):
+                %sum = arith.mulf %sumElement, %scaleElement : f32
+                linalg.yield %sum : f32
+        }
+        -> tensor<2x4xf32>
+
+        //multiplication
+        %resultTensor = linalg.generic
+        {
+            indexing_maps =[
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>,
+                affine_map<(i, j) -> (i, j)>
+            ]
+
+            iterator_types = ["parallel", "parallel"]
+        }
+
+        ins(%sumTensor, %scale : tensor<2x4xf32>, tensor<2x4xf32>)
+        outs(%init : tensor<2x4xf32>)
+        
+        {
+            ^bb0(%sumElement : f32, %scaleElement : f32, %oldElement : f32):
+                %product = arith.mulf %sumElement, %scaleElement : f32
+                linalg.yield %product : f32
+        }
+
+        -> tensor<2x4xf32>
+
+        return %resultTensor : tensor<2x4xf32>
+    }
     
 }//module
