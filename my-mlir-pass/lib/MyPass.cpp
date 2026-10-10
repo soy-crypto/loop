@@ -7,6 +7,8 @@
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "llvm/ADT/StringMap.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/IR/BuiltinTypes.h"
 
 #include <string>
 #include <cstdint>
@@ -17,7 +19,7 @@ using namespace mlir;
 
 namespace
 {
-    //pass - 
+    //pass - Print
     struct PrintOpsPass : PassWrapper<PrintOpsPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(PrintOpsPass);
@@ -44,7 +46,7 @@ namespace
 
     };
 
-    //pass3 - Function
+    //pass - Function
     struct FunctionStatsPass : PassWrapper<FunctionStatsPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(FunctionStatsPass);
@@ -1196,6 +1198,61 @@ namespace
         }//void
 
     };
+
+    struct LinalgAnalysisPass : PassWrapper<LinalgAnalysisPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LinalgAnalysisPass);
+
+        StringRef getArgument() const override
+        {
+            return "linalg-analysis";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "print matmul tensor types";
+        }
+
+        void runOnOperation() override
+        {
+            getOperation()->walk([](linalg::MatmulOp op)
+            {
+                //print type
+                auto operands = op.getOperands();
+                llvm::errs() << "A: " << operands[0].getType() << "\n";
+                llvm::errs() << "B: " << operands[1].getType() << "\n";
+                llvm::errs() << "C: " << operands[2].getType() << "\n";
+                for(Value result : op.getResults())
+                {
+                    llvm::errs() << "Result: " << result.getType() << "\n";
+                }
+
+                //print properties
+                auto aType = cast<RankedTensorType>(operands[0].getType());
+                auto bType = cast<RankedTensorType>(operands[1].getType());
+                int64_t M = aType.getDimSize(0);
+                int64_t K = aType.getDimSize(1);
+                int64_t N = bType.getDimSize(1);
+                llvm::errs() << "M = " << M << ", K = " << K << ", N = " << N << "\n";
+
+                //print index
+                auto maps = op.getIndexingMapsArray();
+                llvm::errs() << "A map: " << maps[0] << "\n";
+                llvm::errs() << "B map: " << maps[1] << "\n";
+                llvm::errs() << "C map: " << maps[2] << "\n"; 
+
+                //print iterators
+                auto iteratorTypes = op.getIteratorTypesArray();
+                for(unsigned index = 0; index < iteratorTypes.size(); index++)
+                {
+                    llvm::errs() << "Loop: " << index << ": " << utils::stringifyIteratorType(iteratorTypes[index]) << "\n";
+                }
+                
+            });
+
+        }//void
+        
+    };
     
    
 }//namespace
@@ -1211,4 +1268,5 @@ void registerMyPass()
     PassRegistration<CSEPass>();
     PassRegistration<ICPass>();
     PassRegistration<ICPatternPass>();
+    PassRegistration<LinalgAnalysisPass>();
 }
