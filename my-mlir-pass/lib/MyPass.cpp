@@ -1199,6 +1199,7 @@ namespace
 
     };
 
+    //pass - Linaglg analysis 
     struct LinalgAnalysisPass : PassWrapper<LinalgAnalysisPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LinalgAnalysisPass);
@@ -1256,6 +1257,53 @@ namespace
         }//void
         
     };
+
+    //pass - Fusion
+    struct FusionPass : PassWrapper<FussionPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INERNAL_INLINE_TYPE_ID(FusionPass);
+
+        StringRef getArgument() const override
+        {
+            return "fusion";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "tensor fusion operations";
+        }
+
+        void getDependentDialects(DialectRegistry &registry) const override
+        {
+            registry.insert<arith::ArithDialects, linalg::LinalgDialect, tensor::TensorDialect>();
+        }
+
+        void runOnOperation() override
+        {
+            //pattern set
+            RewritePatternSet patterns(&getContext());
+
+            //
+            linalg::populateElementWiseOpsFusionPatterns(
+                patterns, 
+                [](OpOpeerand* operand)
+                {
+                    Operation* producer = operand->get().getDefiningOp();
+                    return producer && producer->hasOneUse();
+                });
+
+            //greedy use patterns
+            GreedyRewriteConfig config;
+            config.enableFolding(false);
+            if(failed(applyPatternsGreedily(getOperation(), std::move(patterns), config)))
+            {
+                signalPassFailure();
+            }
+
+        }//voide
+
+    };// fusion pass
+    
     
    
 }//namespace
@@ -1272,4 +1320,5 @@ void registerMyPass()
     PassRegistration<ICPass>();
     PassRegistration<ICPatternPass>();
     PassRegistration<LinalgAnalysisPass>();
+    PassRegistration<FusionPass>();
 }
