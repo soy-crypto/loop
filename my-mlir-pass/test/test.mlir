@@ -104,7 +104,7 @@ module
 
         {
             ^bb0(%aElement : f32, %bElement : f32, %old : f32):
-                %sum = arith.mulf %sumElement, %scaleElement : f32
+                %sum = arith.addf %aElement, %bElement : f32
                 linalg.yield %sum : f32
         }
         -> tensor<2x4xf32>
@@ -116,7 +116,7 @@ module
                 affine_map<(i, j) -> (i, j)>,
                 affine_map<(i, j) -> (i, j)>,
                 affine_map<(i, j) -> (i, j)>
-            ]
+            ],
 
             iterator_types = ["parallel", "parallel"]
         }
