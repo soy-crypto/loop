@@ -55,7 +55,8 @@ module
                 %sum = arith.addf %acc, %product : f32
                 linalg.yield %sum : f32
         } -> tensor<2x4xf32>
-        
+
+        return %result : tensor<2x4xf32>
     }
     
 }
