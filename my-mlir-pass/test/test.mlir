@@ -31,8 +31,7 @@ module
     //linalg dialect
     func.func @matmul(%a : tensor<2x3xf32>, %b : tensor<3x4xf32>, %init: tensor<2x4xf32>) -> tensor<2x4xf32>
     {
-        %result = linalg.matmul ins(%a, %b : tensor<2x3xf32>, tensor<3x4xf32>) outs(%init : tensor<2x4xf32>) 
-                                -> tensor<2x4xf32>
+        %result = linalg.matmul ins(%a, %b : tensor<2x3xf32>, tensor<3x4xf32>) outs(%init : tensor<2x4xf32>) -> tensor<2x4xf32>
 
         return %result : tensor<2x4xf32>
     }

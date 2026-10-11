@@ -5,7 +5,8 @@
 #include <cstdio>
 #include <cstdlib>
 
-struct MemRef2D {
+struct MemRef2D 
+{
   float *allocated;
   float *aligned;
   std::int64_t offset;
@@ -24,7 +25,8 @@ static MemRef2D describe(float *data) {
   return {data, data, 0, {8, 8}, {8, 1}};
 }
 
-int main() {
+int main() 
+{
   alignas(64) float a[64];
   alignas(64) float b[64];
   alignas(64) float scale[64];
