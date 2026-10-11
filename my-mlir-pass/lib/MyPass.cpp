@@ -16,6 +16,7 @@
 #include "mlir/Dialect/SCF/Transforms/TileUsingInterface.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Interfaces/TilingInterface.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <string>
 #include <cstdint>
@@ -1425,7 +1426,7 @@ namespace
                 });
 
                 //tiling
-                int64_t m = 1, n = 2;
+                int64_t m = 2, n = 2;
                 for(linalg::GenericOp op : geOps)
                 {
                     //set insert position

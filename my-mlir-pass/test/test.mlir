@@ -85,7 +85,7 @@ module
         return %result : tensor<2x4xf32>
     }
 
-    func.func @add_then_mul(%a : tensor<2x4xf32>, %b : tensor<2x4xf32>, %scale : tensor<2x4xf32>, %init : tensor<2x4xf32>) -> tensor<2x4xf32>
+    func.func @add_then_mul(%a : tensor<8x8xf32>, %b : tensor<8x8xf32>, %scale : tensor<8x8xf32>, %init : tensor<8x8xf32>) -> tensor<8x8xf32>
     {
         //addtion
         %sumTensor = linalg.generic
@@ -99,15 +99,15 @@ module
             iterator_types = ["parallel", "parallel"]
         }
 
-        ins(%a, %b : tensor<2x4xf32>, tensor<2x4xf32>)
-        outs(%init : tensor<2x4xf32>)
+        ins(%a, %b : tensor<8x8xf32>, tensor<8x8xf32>)
+        outs(%init : tensor<8x8xf32>)
 
         {
             ^bb0(%aElement : f32, %bElement : f32, %old : f32):
                 %sum = arith.addf %aElement, %bElement : f32
                 linalg.yield %sum : f32
         }
-        -> tensor<2x4xf32>
+        -> tensor<8x8xf32>
 
         //multiplication
         %resultTensor = linalg.generic
@@ -121,8 +121,8 @@ module
             iterator_types = ["parallel", "parallel"]
         }
 
-        ins(%sumTensor, %scale : tensor<2x4xf32>, tensor<2x4xf32>)
-        outs(%init : tensor<2x4xf32>)
+        ins(%sumTensor, %scale : tensor<8x8xf32>, tensor<8x8xf32>)
+        outs(%init : tensor<8x8xf32>)
         
         {
             ^bb0(%sumElement : f32, %scaleElement : f32, %oldElement : f32):
@@ -130,9 +130,9 @@ module
                 linalg.yield %product : f32
         }
 
-        -> tensor<2x4xf32>
+        -> tensor<8x8xf32>
 
-        return %resultTensor : tensor<2x4xf32>
+        return %resultTensor : tensor<8x8xf32>
     }
     
 }//module
