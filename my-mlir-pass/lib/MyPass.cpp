@@ -1425,7 +1425,7 @@ namespace
                 });
 
                 //tiling
-                int64_t m = 2, n = 2;
+                int64_t m = 1, n = 2;
                 for(linalg::GenericOp op : geOps)
                 {
                     //set insert position
@@ -1434,6 +1434,7 @@ namespace
                     //set tile dimensions
                     scf::SCFTilingOptions options;
                     options.setTileSizes({rewriter.getIndexAttr(m), rewriter.getIndexAttr(n)});
+                    llvm::errs() << "requested tile sizes: " << m << " x " << n;
 
                     //create tile and its loop
                     auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()), options);
@@ -1452,7 +1453,7 @@ namespace
             });
 
         }//runOnOperation
-    }
+    };
     
    
 }//namespace
