@@ -9,6 +9,13 @@
 #include "llvm/ADT/StringMap.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/IR/BuiltinTypes.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Linalg/Transforms/Transforms.h"
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Linalg/Transforms/TilingInterfaceImpl.h"
+#include "mlir/Dialect/SCF/Transforms/TileUsingInterface.h"
+#include "mlir/IR/PatternMatch.h"
+#include "mlir/Interfaces/TilingInterface.h"
 
 #include <string>
 #include <cstdint>
@@ -1259,9 +1266,9 @@ namespace
     };
 
     //pass - Fusion
-    struct FusionPass : PassWrapper<FussionPass, OperationPass<ModuleOp>>
+    struct FusionPass : PassWrapper<FusionPass, OperationPass<ModuleOp>>
     {
-        MLIR_DEFINE_EXPLICIT_INERNAL_INLINE_TYPE_ID(FusionPass);
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(FusionPass);
 
         StringRef getArgument() const override
         {
@@ -1275,7 +1282,7 @@ namespace
 
         void getDependentDialects(DialectRegistry &registry) const override
         {
-            registry.insert<arith::ArithDialects, linalg::LinalgDialect, tensor::TensorDialect>();
+            registry.insert<arith::ArithDialect, linalg::LinalgDialect, tensor::TensorDialect>();
         }
 
         void runOnOperation() override
@@ -1283,10 +1290,10 @@ namespace
             //pattern set
             RewritePatternSet patterns(&getContext());
 
-            //
-            linalg::populateElementWiseOpsFusionPatterns(
+            //populateElementwiseOpsFusionPatterns
+            linalg::populateElementwiseOpsFusionPatterns(
                 patterns, 
-                [](OpOpeerand* operand)
+                [](OpOperand* operand)
                 {
                     Operation* producer = operand->get().getDefiningOp();
                     return producer && producer->hasOneUse();
@@ -1303,7 +1310,149 @@ namespace
         }//voide
 
     };// fusion pass
-    
+
+    //pass - Tiling
+    struct TilingPass : PassWrapper<TilingPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TilingPass);
+
+        StringRef getArgument() const override
+        {
+            return "tiling";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "tiling pass";
+        }
+
+        void getDependentDialects(DialectRegistry &registry) const override
+        {
+            registry.insert<affine::AffineDialect, arith::ArithDialect, linalg::LinalgDialect, scf::SCFDialect, tensor::TensorDialect>();
+            linalg::registerTilingInterfaceExternalModels(registry);
+        }
+
+        void runOnOperation() override
+        {
+            getOperation()->walk([this](func::FuncOp func)
+            {
+                //only check "add_then_mul"
+                if(func.getSymName() != "add_then_mul")
+                {
+                    return;
+                }
+
+                //Init
+                IRRewriter rewriter(&getContext());
+
+                //collect all generic ops
+                SmallVector<linalg::GenericOp> geOps;
+                func.walk([&geOps](linalg::GenericOp op)
+                {
+                    geOps.push_back(op);
+                });
+
+                //tiling
+                int64_t m = 2, n = 2;
+                for(linalg::GenericOp op : geOps)
+                {
+                    //set insert position
+                    rewriter.setInsertionPoint(op);
+
+                    //set tile dimensions
+                    scf::SCFTilingOptions options;
+                    options.setTileSizes({rewriter.getIndexAttr(m), rewriter.getIndexAttr(n)});
+
+                    //create tile and its loop
+                    auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()), options);
+                    if(failed(tiled))
+                    {
+                        op->emitError("tiling failed");
+                        signalPassFailure();
+                        return;
+                    }
+
+                    //replace original tensor computation
+                    rewriter.replaceOp(op, tiled->replacements);
+                }
+                
+                
+            });
+
+        }//runOnOperation
+
+    };
+
+    //pass - Bufferization
+    struct BuffPass : PassWrapper<BuffPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TilingPass);
+
+        StringRef getArgument() const override
+        {
+            return "tiling";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "tiling pass";
+        }
+
+        void getDependentDialects(DialectRegistry &registry) const override
+        {
+            registry.insert<affine::AffineDialect, arith::ArithDialect, linalg::LinalgDialect, scf::SCFDialect, tensor::TensorDialect>();
+            linalg::registerTilingInterfaceExternalModels(registry);
+        }
+
+        void runOnOperation() override
+        {
+            getOperation()->walk([this](func::FuncOp func)
+            {
+                //only check "add_then_mul"
+                if(func.getSymName() != "add_then_mul")
+                {
+                    return;
+                }
+
+                //Init
+                IRRewriter rewriter(&getContext());
+
+                //collect all generic ops
+                SmallVector<linalg::GenericOp> geOps;
+                func.walk([&geOps](linalg::GenericOp op)
+                {
+                    geOps.push_back(op);
+                });
+
+                //tiling
+                int64_t m = 2, n = 2;
+                for(linalg::GenericOp op : geOps)
+                {
+                    //set insert position
+                    rewriter.setInsertionPoint(op);
+
+                    //set tile dimensions
+                    scf::SCFTilingOptions options;
+                    options.setTileSizes({rewriter.getIndexAttr(m), rewriter.getIndexAttr(n)});
+
+                    //create tile and its loop
+                    auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()), options);
+                    if(failed(tiled))
+                    {
+                        op->emitError("tiling failed");
+                        signalPassFailure();
+                        return;
+                    }
+
+                    //replace original tensor computation
+                    rewriter.replaceOp(op, tiled->replacements);
+                }
+                
+                
+            });
+
+        }//runOnOperation
+    }
     
    
 }//namespace
@@ -1321,4 +1470,5 @@ void registerMyPass()
     PassRegistration<ICPatternPass>();
     PassRegistration<LinalgAnalysisPass>();
     PassRegistration<FusionPass>();
+    PassRegistration<TilingPass>();
 }
