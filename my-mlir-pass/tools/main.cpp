@@ -1,29 +1,33 @@
+#include "mlir/InitAllDialects.h"
+#include "mlir/InitAllExtensions.h"
+#include "mlir/InitAllPasses.h"
+#include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
+#include "mlir/Target/LLVMIR/Dialect/NVVM/NVVMToLLVMIRTranslation.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
-#include "mlir/IR/DialectRegistry.h"
-#include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/Dialect/Arith/IR/Arith.h"
-#include "mlir/Dialect/SCF/IR/SCF.h"
-#include "mlir/Dialect/Linalg/IR/Linalg.h"
-#include "mlir/Dialect/Linalg/Passes.h"
-#include "mlir/Dialect/Linalg/Transforms/Transforms.h"
-#include "mlir/Dialect/Tensor/IR/Tensor.h"
-#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+#include "llvm/Support/TargetSelect.h"
+#include "mlir/Target/LLVMIR/Dialect/GPU/GPUToLLVMIRTranslation.h"
 
 extern void registerMyPass();
+extern void registerMyGPUPipelines();
 
-int main(int argc, char **argv)
-{
-    //register
-    registerMyPass();
-    mlir::registerLinalgElementwiseOpFusionPass(); 
+int main(int argc, char **argv) {
+  // The PTX serializer needs LLVM's NVIDIA code generator.
+  LLVMInitializeNVPTXTargetInfo();
+  LLVMInitializeNVPTXTarget();
+  LLVMInitializeNVPTXTargetMC();
+  LLVMInitializeNVPTXAsmPrinter();
 
-    //dialect registration
-    mlir::DialectRegistry registry;
-    registry.insert<mlir::func::FuncDialect, 
-                    mlir::arith::ArithDialect, 
-                    mlir::scf::SCFDialect, 
-                    mlir::linalg::LinalgDialect>();
+  mlir::registerAllPasses();
+  registerMyPass();
+  registerMyGPUPipelines();
 
-    //Return
-    return mlir::asMainReturnCode(mlir::MlirOptMain(argc, argv, "my mlir tool\n", registry));
+  mlir::DialectRegistry registry;
+  mlir::registerAllDialects(registry);
+  mlir::registerAllExtensions(registry);
+  mlir::registerLLVMDialectTranslation(registry);
+  mlir::registerNVVMDialectTranslation(registry);
+  mlir::registerGPUDialectTranslation(registry);
+
+  return mlir::asMainReturnCode(
+      mlir::MlirOptMain(argc, argv, "my mlir tool\n", registry));
 }

@@ -551,7 +551,7 @@ namespace
         
         StringRef getArgument() const override
         {
-            return "cse";
+            return "toy-cse";
         }
 
         StringRef getDescription() const override
@@ -1273,7 +1273,7 @@ namespace
 
         StringRef getArgument() const override
         {
-            return "fusion";
+            return "toy-fusion";
         }
 
         StringRef getDescription() const override
@@ -1319,7 +1319,7 @@ namespace
 
         StringRef getArgument() const override
         {
-            return "tiling";
+            return "toy-tiling";
         }
 
         StringRef getDescription() const override
@@ -1384,82 +1384,8 @@ namespace
 
     };
 
-    //pass - Bufferization
-    struct BuffPass : PassWrapper<BuffPass, OperationPass<ModuleOp>>
-    {
-        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TilingPass);
-
-        StringRef getArgument() const override
-        {
-            return "tiling";
-        }
-
-        StringRef getDescription() const override
-        {
-            return "tiling pass";
-        }
-
-        void getDependentDialects(DialectRegistry &registry) const override
-        {
-            registry.insert<affine::AffineDialect, arith::ArithDialect, linalg::LinalgDialect, scf::SCFDialect, tensor::TensorDialect>();
-            linalg::registerTilingInterfaceExternalModels(registry);
-        }
-
-        void runOnOperation() override
-        {
-            getOperation()->walk([this](func::FuncOp func)
-            {
-                //only check "add_then_mul"
-                if(func.getSymName() != "add_then_mul")
-                {
-                    return;
-                }
-
-                //Init
-                IRRewriter rewriter(&getContext());
-
-                //collect all generic ops
-                SmallVector<linalg::GenericOp> geOps;
-                func.walk([&geOps](linalg::GenericOp op)
-                {
-                    geOps.push_back(op);
-                });
-
-                //tiling
-                int64_t m = 2, n = 2;
-                for(linalg::GenericOp op : geOps)
-                {
-                    //set insert position
-                    rewriter.setInsertionPoint(op);
-
-                    //set tile dimensions
-                    scf::SCFTilingOptions options;
-                    options.setTileSizes({rewriter.getIndexAttr(m), rewriter.getIndexAttr(n)});
-                    llvm::errs() << "requested tile sizes: " << m << " x " << n;
-
-                    //create tile and its loop
-                    auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()), options);
-                    if(failed(tiled))
-                    {
-                        op->emitError("tiling failed");
-                        signalPassFailure();
-                        return;
-                    }
-
-                    //replace original tensor computation
-                    rewriter.replaceOp(op, tiled->replacements);
-                }
-                
-                
-            });
-
-        }//runOnOperation
-    };
-
     
 
-
-    
    
 }//namespace
 
