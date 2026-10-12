@@ -10,7 +10,8 @@
 extern void registerMyPass();
 extern void registerMyGPUPipelines();
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
   // The PTX serializer needs LLVM's NVIDIA code generator.
   LLVMInitializeNVPTXTargetInfo();
   LLVMInitializeNVPTXTarget();
@@ -28,6 +29,5 @@ int main(int argc, char **argv) {
   mlir::registerNVVMDialectTranslation(registry);
   mlir::registerGPUDialectTranslation(registry);
 
-  return mlir::asMainReturnCode(
-      mlir::MlirOptMain(argc, argv, "my mlir tool\n", registry));
+  return mlir::asMainReturnCode(mlir::MlirOptMain(argc, argv, "my mlir tool\n", registry));
 }

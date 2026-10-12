@@ -19,7 +19,8 @@ include_directories(${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 # Preserve the existing custom fusion and tiling implementations.
-add_mlir_library(MyMLIRPass
+add_mlir_library(
+  MyMLIRPass
   lib/MyPass.cpp
   EXCLUDE_FROM_LIBMLIR
   LINK_LIBS PUBLIC
