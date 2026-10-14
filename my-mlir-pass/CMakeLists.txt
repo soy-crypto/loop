@@ -36,7 +36,13 @@ get_property(my_conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
 get_property(my_extension_libs GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
 
 
-add_executable(my-opt tools/main.cpp tools/GpuPipeline.cpp)
+add_executable(my-opt
+  tools/main.cpp
+  tools/GpuPipeline.cpp
+  ../matmul-pipeline/original/MatmulPipeline.cpp
+  ../matmul-pipeline/shared-tiles/MatmulPipeline.cpp
+  ../matmul-pipeline/vector-load/VectorizeCopies.cpp
+  ../matmul-pipeline/prefetch/PrefetchTiles.cpp)
 target_link_libraries(my-opt PRIVATE
   MyMLIRPass
   ${my_dialect_libs}
