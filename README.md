@@ -33,7 +33,7 @@ make -C kernels run        # needs nvcc + an NVIDIA GPU
 a `mul` is unused and its `const` dies with it. CSE collapses duplicate
 immediates and rewrites their users.
 
-**`llvm-pass`** — on `input.ll`, `%dead` disappears and the live `add` stays:
+**`llvm-pass`** .— on `inputll`, `%dead` disappears and the live `add` stays:
 
 ```llvm
 define i32 @f(i32 %x) {
@@ -79,7 +79,7 @@ and no destructor calls `delete` by hand.
 
 ## Practice order
 
-This repo is also interview prep, and reading it is not the same as knowing it.
+This repo is also interview prep, and  it readingis not the same as knowing it.
 The drill is to rewrite each piece from an empty file:
 
 1. Read `toy-ir/STUDY.cpp`, then wipe the bodies of `dce` and `cse_const` and
