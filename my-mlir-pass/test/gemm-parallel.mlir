@@ -26,7 +26,7 @@ module
         %cElement     = memref.load %C[%i, %j] : memref<64x64xf32>
         %mulResult    = arith.mulf %aElement,  %bElement: f32
         %mulAddResult = arith.addf %mulResult, %cElement : f32
-        memref.store %mulAddResult, %C[%i %j] : memref<64x64xf32>
+        memref.store %mulAddResult, %C[%i, %j] : memref<64x64xf32>
       }
 
       scf.reduce
