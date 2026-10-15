@@ -1,6 +1,9 @@
 #map = affine_map<()[s0] -> (s0 * 16)>
-module attributes {gpu.container_module} {
-  func.func @matmul(%arg0: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg1: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg2: memref<128x128xf32, strided<[?, ?], offset: ?>>) -> memref<128x128xf32, strided<[?, ?], offset: ?>> {
+
+module attributes {gpu.container_module} 
+{
+  func.func @matmul(%arg0: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg1: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg2: memref<128x128xf32, strided<[?, ?], offset: ?>>) -> memref<128x128xf32, strided<[?, ?], offset: ?>> 
+  {
     %c0 = arith.constant 0 : index
     %c128 = arith.constant 128 : index
     %c1 = arith.constant 1 : index
@@ -9,8 +12,11 @@ module attributes {gpu.container_module} {
     gpu.launch_func  @matmul_kernel::@matmul_kernel blocks in (%c8, %c8, %c1) threads in (%c16, %c16, %c1)  args(%arg0 : memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg1 : memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg2 : memref<128x128xf32, strided<[?, ?], offset: ?>>, %c0 : index, %c128 : index, %c1 : index)
     return %arg2 : memref<128x128xf32, strided<[?, ?], offset: ?>>
   }
-  gpu.module @matmul_kernel {
-    gpu.func @matmul_kernel(%arg0: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg1: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg2: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg3: index, %arg4: index, %arg5: index) kernel attributes {known_block_size = array<i32: 16, 16, 1>, known_grid_size = array<i32: 8, 8, 1>} {
+
+  gpu.module @matmul_kernel 
+  {
+    gpu.func @matmul_kernel(%arg0: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg1: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg2: memref<128x128xf32, strided<[?, ?], offset: ?>>, %arg3: index, %arg4: index, %arg5: index) kernel attributes {known_block_size = array<i32: 16, 16, 1>, known_grid_size = array<i32: 8, 8, 1>} 
+    {
       %block_id_x = gpu.block_id  x
       %block_id_y = gpu.block_id  y
       %block_id_z = gpu.block_id  z
