@@ -25,7 +25,9 @@
 
 
 /*custom head file */
-#include "PromoteAccumulatorPass.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/IR/IRMapping.h"
+#include "llvm/ADT/STLExtras.h"
 
 
 using namespace mlir;
@@ -1390,6 +1392,16 @@ namespace
     };
 
     //pass - ToyPromoteAccumulatorPass
+    struct PaPattern : OpRewritePattern<scf::ForOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+        LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
+        {
+            
+        }
+
+    }
+    
     struct ToyPromoteAccumulatorPass : PassWrapper<ToyPromoteAccumulatorPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToyPromoteAccumulatorPass);
@@ -1404,11 +1416,20 @@ namespace
             return "pa pass";
         }
 
-        
-    }
+        void runOnOperation() override
+        {
+            RewritePatternSet patterns(&getContext());
+            patterns.add<PAPattern>(&getContext());
+            if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
+            {
+                signalPassFailure();
+            }
+
+        }//void
+
+    }; // struct
     
 
-   
 }//namespace
 
 //Register
