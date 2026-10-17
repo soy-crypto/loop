@@ -1400,13 +1400,15 @@ namespace
             //check validity
             if(loop == nullptr)
             {
-                return signalPassFailure();
+                return failure();
             }
 
             //check old workflow
             auto func = loop->getParentOfType<func::FuncOp>();
-            
-            
+            if(func == nullptr || func->hasAttr("toy.accumulator_safe"))
+            {
+                return failure();
+            }
 
         }
 
