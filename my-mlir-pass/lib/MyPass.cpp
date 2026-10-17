@@ -23,6 +23,11 @@
 #include <sstream>
 #include <utility>
 
+
+/*custom head file */
+#include "PromoteAccumulatorPass.h"
+
+
 using namespace mlir;
 
 namespace
@@ -1383,6 +1388,24 @@ namespace
         }//runOnOperation
 
     };
+
+    //pass - ToyPromoteAccumulatorPass
+    struct ToyPromoteAccumulatorPass : PassWrapper<ToyPromoteAccumulatorPass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToyPromoteAccumulatorPass);
+
+        StringRef getArgument() const override
+        {
+            return "toy-pa";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "pa pass";
+        }
+
+        
+    }
     
 
    
@@ -1402,4 +1425,5 @@ void registerMyPass()
     PassRegistration<LinalgAnalysisPass>();
     PassRegistration<FusionPass>();
     PassRegistration<TilingPass>();
+    PassRegistration<ToyPromoteAccumulatorPass>();
 }
