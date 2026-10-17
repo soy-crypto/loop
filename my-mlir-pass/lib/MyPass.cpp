@@ -1397,10 +1397,20 @@ namespace
         using OpRewritePattern::OpRewritePattern;
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
         {
+            //check validity
+            if(loop == nullptr)
+            {
+                return signalPassFailure();
+            }
+
+            //check old workflow
+            auto func = loop->getParentOfType<func::FuncOp>();
             
+            
+
         }
 
-    }
+    };//
     
     struct ToyPromoteAccumulatorPass : PassWrapper<ToyPromoteAccumulatorPass, OperationPass<ModuleOp>>
     {
@@ -1419,7 +1429,7 @@ namespace
         void runOnOperation() override
         {
             RewritePatternSet patterns(&getContext());
-            patterns.add<PAPattern>(&getContext());
+            patterns.add<PaPattern>(&getContext());
             if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
             {
                 signalPassFailure();
