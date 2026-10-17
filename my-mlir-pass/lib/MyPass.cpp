@@ -1405,10 +1405,13 @@ namespace
 
             //check old workflow
             auto func = loop->getParentOfType<func::FuncOp>();
-            if(func == nullptr || func->hasAttr("toy.accumulator_safe"))
+            if(func == nullptr || func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
             {
                 return failure();
             }
+
+            s
+            
 
         }
 
