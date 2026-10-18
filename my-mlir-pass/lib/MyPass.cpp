@@ -1396,15 +1396,15 @@ namespace
     struct PaPattern : OpRewritePattern<scf::ForOp>
     {
         using OpRewritePattern::OpRewritePattern;
-        struct MatchedOps
+        struct TargetOps
         {
-            memref::LoadOp aLoad, bLoad, cLoad;
-            arith::MulFOp mul;
-            arith::AddFOp add;
-            memref::StoreOp store;
+            memref::LoadOp loadOp1, loadOp2, loadOp3;
+            arith::MulFOp mulOp;
+            arith::AddFOp addOp;
+            memref::StoreOp storeOp;
         }; //
 
-        std::optional<MatchedOps> checkPreconditions(scf::ForOp loop) const
+        std::optional<TargetOps> checkPreconditions(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1412,26 +1412,23 @@ namespace
                 return std::nullopt;
             }
 
-            //Check loop structuer
-            bool flag = hasTargetLoop(loop);
-            if(flag == false)
+            //check loop structuer
+            if(hasTargetLoop(loop) == false)
             {
                 return std::nullopt;
             }
 
             //check ops
-            struct MatchedOps matchedOp;
-            matchedOp = hasCorrectOps();
-            if(matchedOp == nullptr)
+            if(hasCorrectOps(loop) == false)
             {
                 return std::nullopt;
             }
 
             //return
-            return matchedOp;
+            return targetOps;
         }//
 
-        bool checkTargetLoop(scf::ForOp loop)
+        bool hasTargetLoop(scf::ForOp loop)
         {
             //check
             auto func = loop->getParentOfType<func::FuncOp>();
@@ -1450,7 +1447,7 @@ namespace
 
         }//
 
-        bool checkTargetOps(scf::ForOp loop)
+        bool hasTargetOps(scf::ForOp loop, struct TargetOps tarOps)
         {
             //return reuslt
             SmallVector<Value> runningResults;
@@ -1478,12 +1475,22 @@ namespace
             {
                 return false;
             }
+
+            //get all target ops
+            SmallVector<Operation&> ops;
+            for(Operation& op : loop.getBody()->without_teminator())
+            {
+                ops.push_back(&op);
+            }
+
+            tarops.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            
             
             //return
             return true;
         }//
 
-        SmallVector<Value> checkLoadOps(scf::ForOp loop)
+        bool checkLoadOps(scf::ForOp loop)
         {
             //get all of load ops
             SmallVector<memref::LoadOp> ops;
