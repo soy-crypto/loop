@@ -1459,29 +1459,32 @@ namespace
 
         bool hasTargetOps(scf::ForOp loop)
         {
-            //return reuslt
+            //parent func
+            auto func = loop->getParentOfType<func::FuncOp>();
+
+            //running reuslt
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(checkLoadOps(loops, runningResults))
+            if(checkLoadOps(loops, func.getArgument(0), ))
             {
                 return false;
             }
 
             //check mul ops
-            if(checkMulOps(loop, runningResults))
+            if(checkMulOps(loop, func, runningResults))
             {
                 return false;
             }
 
             //check add ops
-            if(checkAddOps(loop, runningResults))
+            if(checkAddOps(loop, func, runningResults))
             {
                 return false;
             }
 
             //check store ops
-            if(checkStoreOps(loop, runningResults))
+            if(checkStoreOps(loop, func, runningResults))
             {
                 return false;
             }
@@ -1527,6 +1530,8 @@ namespace
             {
                 return {};
             }
+
+            //match A indicies, B indices, C incicds match the outsidde value
 
             //match gemm multiplication indicies
             if(Ai != Ci || Aj != k || Bi != k || Bj != Cj)
@@ -1617,7 +1622,7 @@ namespace
 
         }//
 
-        bool checkStoreOps(scf::ForOp loop)
+        bool checkStoreOps(scf::ForOp loop, s)
         {
             //check validity
             if(loop == nullptr)
@@ -1643,7 +1648,7 @@ namespace
 
             //check store op
             bool flag = false;
-            if(op[0].getLhs() == lhs && op[0].getRhs() == rhs)
+            if(op[0].getValueToStore() == lhs && op[0].getMemRef() == rhs, op[0].getIndices()[0] == i && op[0].getIndices()[0] == j)
             {
                 flag = true;
             }
