@@ -1472,19 +1472,19 @@ namespace
             }
 
             //check mul ops
-            if(checkMulOps(loop, func, runningResults))
+            if(checkMulOps(loop, runningResults[0], runningResults[1]))
             {
                 return false;
             }
 
             //check add ops
-            if(checkAddOps(loop, func, runningResults))
+            if(checkAddOps(loop, runningResults[3], runningResults.[2]))
             {
                 return false;
             }
 
             //check store ops
-            if(checkStoreOps(loop, func, runningResults))
+            if(checkStoreOps(loop, runningResults[5], func.getArgument(1), ))
             {
                 return false;
             }
