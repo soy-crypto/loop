@@ -1466,7 +1466,7 @@ namespace
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(checkLoadOps(loops, func.getArgument(0), ))
+            if(checkLoadOps(loops, func, runningResuls))
             {
                 return false;
             }
@@ -1493,7 +1493,7 @@ namespace
             return true;
         }//
 
-        bool checkLoadOps(scf::ForOp loop)
+        bool checkLoadOps(scf::ForOp loop, func::Func func, SmallVector<> results)
         {
             //get all of load ops
             SmallVector<memref::LoadOp> ops;
@@ -1509,7 +1509,7 @@ namespace
 
             if(ops.empty())
             {
-                return {};
+                return false;
             }
 
             //check all load ops
@@ -1522,31 +1522,30 @@ namespace
             //match input parameters
             if(A != func.getArgument(0) || B != func.getArgument(1) || C != func.getArgument(2))
             {
-                return {};
+                return false;
             }
             
             //match two indicies
             if(ops[0].getIndices().size() != 2 || ops[1].getIndices().size() != 2 || ops[2].getIndices().size() != 2)
             {
-                return {};
+                return false;
             }
 
             //match A indicies, B indices, C incicds match the outsidde value
 
             //match gemm multiplication indicies
-            if(Ai != Ci || Aj != k || Bi != k || Bj != Cj)
+            if(Ai != Ci || Aj != k || Bi != k || Bj != Cj || !loop.isDefinedOutsideOfLoop(Ci) || !loop.isDefinedOutsideOfLoop(Cj))
             {
-                return {};
+                return false;
             }
             
             //update retunr value;
-            SmallVector<Value> results;
             results.push_back(ops[0].getResult());
             results.push_back(ops[1].getResult());
             results.push_back(ops[2].getResult());
 
             //return
-            return results;
+            return true;
         }//
 
         bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs)
