@@ -1424,6 +1424,16 @@ namespace
                 return std::nullopt;
             }
 
+            //get all target ops
+            SmallVector<Operation&> ops;
+            for(Operation& op : loop.getBody()->without_teminator())
+            {
+                ops.push_back(&op);
+            }
+
+            tarOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            
+
             //return
             return targetOps;
         }//
@@ -1447,7 +1457,7 @@ namespace
 
         }//
 
-        bool hasTargetOps(scf::ForOp loop, struct TargetOps tarOps)
+        bool hasTargetOps(scf::ForOp loop)
         {
             //return reuslt
             SmallVector<Value> runningResults;
@@ -1475,16 +1485,6 @@ namespace
             {
                 return false;
             }
-
-            //get all target ops
-            SmallVector<Operation&> ops;
-            for(Operation& op : loop.getBody()->without_teminator())
-            {
-                ops.push_back(&op);
-            }
-
-            tarops.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
-            
             
             //return
             return true;
