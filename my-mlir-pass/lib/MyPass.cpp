@@ -17,6 +17,7 @@
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Interfaces/TilingInterface.h"
 #include "llvm/Support/raw_ostream.h"
+#include "mlir/Dialect/Utils/StaticValueUtils.h"
 
 #include <string>
 #include <cstdint>
@@ -1395,6 +1396,107 @@ namespace
     struct PaPattern : OpRewritePattern<scf::ForOp>
     {
         using OpRewritePattern::OpRewritePattern;
+        struct MatchedOps
+        {
+            memref::LoadOp aLoad, bLoad, cLoad;
+            arith::MulFOp mul;
+            arith::AddFOp add;
+            memref::StoreOp store;
+        }; //
+
+        std::optional<MatchedOps> checkPreconditions(scf::ForOp loop) const
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return std::nullopt;
+            }
+
+            //Check loop structuer
+            bool flag = hasTargetLoop(loop);
+            if(flag == false)
+            {
+                return std::nullopt;
+            }
+
+            //check ops
+            struct MatchedOps matchedOp;
+            matchedOp = hasCorrectOps();
+            if(matchedOp == nullptr)
+            {
+                return std::nullopt;
+            }
+
+            //return
+            return matchedOp;
+        }//
+
+        bool hasTargetLoop(scf::ForOp loop)
+        {
+            //check
+            auto func = loop->getParentOfType<func::FuncOp>();
+            if(func == nullptr || func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
+            {
+                return false;
+            }
+
+            if(!isConstantIntValue(loop.getLowerBound(), 0) || !isConstantIntValue(loop.getUpperBound(), 64) || !isConstantIntValue(loop.getStep(), 1))
+            {
+                return false;
+            }
+
+            //return
+            return true;
+
+        }//
+
+        bool hasTargetOps(scf::ForOp loop)
+        {
+            //get ops
+            SmallVector<Operation*> ops;
+            for(Operation& op : loop.getBody()->without_terminator())
+            {
+                ops.push_back(&op);
+            }
+
+            //check ops
+            auto loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            auto loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
+            auto loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
+            auto mulOp = dyn_cast<arith::MulFOp>(ops[3]);
+            auto addOp = dyn_cast<arith::AddFOp>(ops[4]);
+            auto storeOp = dyn_cast<memref::StoreOp>(ops[5]);
+            if(loadOp1 || loadOp2 || loadOp3 || mulOp || addOp || storeOp)
+            {
+                return false;
+            }
+
+            //check ops' actions
+            auto A = loadOp1.getMemref(), B = loadOp2.getMemref(), C = loadOp3.getMemref();
+            auto aPostions = loadOp1.getIndices(), bPostions = loadOp2.getIndices(), cPostions = loadOp3.getIndices();
+            if(A != func.getArgument(0) || B != func.getArgument(1) || C != func.getArgument(2))
+            {
+                return false();
+            }
+
+            if(aPositions.size() != 2 || bPositions != 2 || cPositions != 2)
+            {
+                return false();
+            }
+
+            //check for loop k
+            auto k = loop.getInductionVar();
+            bool flag = false;
+            if(aPostions[0] == cPostions[0] && aPositions[1] == k && bPositions[0] == k && bPostions[1] == cPositions[1])
+            {
+                flag = true;
+            }
+
+            //return
+            return flag;
+        }//
+        
+
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
         {
             //check validity
@@ -1403,16 +1505,18 @@ namespace
                 return failure();
             }
 
-            //check old workflow
-            auto func = loop->getParentOfType<func::FuncOp>();
-            if(func == nullptr || func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
+            //check preconditions
+            struct MatchedOps ops = checkPreconditions(loop);
+            if(ops == nullptr)
             {
-                return failure();
+                return failuere();
             }
 
-            s
-            
+            //rewrite
 
+
+            //return
+            return success();    
         }
 
     };//
