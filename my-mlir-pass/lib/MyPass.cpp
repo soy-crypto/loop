@@ -1431,7 +1431,7 @@ namespace
             return matchedOp;
         }//
 
-        bool hasTargetLoop(scf::ForOp loop)
+        bool checkTargetLoop(scf::ForOp loop)
         {
             //check
             auto func = loop->getParentOfType<func::FuncOp>();
@@ -1450,44 +1450,193 @@ namespace
 
         }//
 
-        bool hasTargetOps(scf::ForOp loop)
+        bool checkTargetOps(scf::ForOp loop)
         {
-            //get ops
-            SmallVector<Operation*> ops;
-            for(Operation& op : loop.getBody()->without_terminator())
-            {
-                ops.push_back(&op);
-            }
+            //return reuslt
+            SmallVector<Value> runningResults;
 
-            //check ops
-            auto loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
-            auto loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
-            auto loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
-            auto mulOp = dyn_cast<arith::MulFOp>(ops[3]);
-            auto addOp = dyn_cast<arith::AddFOp>(ops[4]);
-            auto storeOp = dyn_cast<memref::StoreOp>(ops[5]);
-            if(loadOp1 || loadOp2 || loadOp3 || mulOp || addOp || storeOp)
+            //check load ops
+            if(checkLoadOps(loops, runningResults))
             {
                 return false;
             }
 
-            //check ops' actions
-            auto A = loadOp1.getMemref(), B = loadOp2.getMemref(), C = loadOp3.getMemref();
-            auto aPostions = loadOp1.getIndices(), bPostions = loadOp2.getIndices(), cPostions = loadOp3.getIndices();
+            //check mul ops
+            if(checkMulOps(loop, runningResults))
+            {
+                return false;
+            }
+
+            //check add ops
+            if(checkAddOps(loop, runningResults))
+            {
+                return false;
+            }
+
+            //check store ops
+            if(checkStoreOps(loop, runningResults))
+            {
+                return false;
+            }
+            
+            //return
+            return true;
+        }//
+
+        SmallVector<Value> checkLoadOps(scf::ForOp loop)
+        {
+            //get all of load ops
+            SmallVector<memref::LoadOp> ops;
+            for(Operation& op : loop.getBody()->without_terminator())
+            {
+                auto loadOp = dyn_cast<memref::loadOp>(&op);
+                if(loadOp)
+                {
+                    ops.push_back(loadOp);
+                }
+
+            }//for 
+
+            if(ops.empty())
+            {
+                return {};
+            }
+
+            //check all load ops
+            Value A = ops[0].getMemref(), B = ops[1].getMemref(), C = ops[2].getMemref();
+            index Ai = ops[0].getIndices()[0], Aj = ops[0].getIndices()[1];
+            index Bi = ops[1].getIndices()[0], Bj = ops[1].getIndices()[1];
+            index Ci = ops[2].getIndices()[0], Cj = ops[2].getIndices()[1];
+            index k = loop.getInductionVar();
+
+            //match input parameters
             if(A != func.getArgument(0) || B != func.getArgument(1) || C != func.getArgument(2))
             {
-                return false();
+                return {};
             }
-
-            if(aPositions.size() != 2 || bPositions != 2 || cPositions != 2)
+            
+            //match two indicies
+            if(ops[0].getIndices().size() != 2 || ops[1].getIndices().size() != 2 || ops[2].getIndices().size() != 2)
             {
-                return false();
+                return {};
             }
 
-            //check for loop k
-            auto k = loop.getInductionVar();
+            //match gemm multiplication indicies
+            if(Ai != Ci || Aj != k || Bi != k || Bj != Cj)
+            {
+                return {};
+            }
+            
+            //update retunr value;
+            SmallVector<Value> results;
+            results.push_back(ops[0].getResult());
+            results.push_back(ops[1].getResult());
+            results.push_back(ops[2].getResult());
+
+            //return
+            return results;
+        }//
+
+        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return false;
+            }
+
+            //get all mulops
+            SmallVectors<arith::MulFOp> ops;
+            for(Operation& op : loop.getBody()->without_terminator())
+            {
+                auto mulOp = dyn_cast<arith::MulFOp>(&op);
+                if(mulOp)
+                {
+                    ops.push_back(mulOp);
+                }
+            }
+
+            if(ops.empty())
+            {
+                return false;
+            }
+
+            //check mul ops
             bool flag = false;
-            if(aPostions[0] == cPostions[0] && aPositions[1] == k && bPositions[0] == k && bPostions[1] == cPositions[1])
+            if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
+            {
+                flag = true;
+            }
+
+            //return
+            retunrn flag;
+
+        }//
+
+        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return false;
+            }
+
+            //get all add ops
+            SmallVector<arith::AddFOp> ops;
+            for(OperationU& op : loop.getBOdy()->without_terminator())
+            {
+                auto addOp = dyn_cast<arith::AddFOp>(&op);
+                if(addOp)
+                {
+                    ops.push_back(addOp);
+                }
+
+            }
+            
+            if(ops.empty())
+            {
+                return false;
+            }
+
+            //check add ops
+            bool flag = false;
+            if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
+            {
+                flag = true;
+            }
+
+            //return
+            return flag;
+
+        }//
+
+        bool checkStoreOps(scf::ForOp loop)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return false;
+            }
+
+            //get store ops
+            SmallVector<scf::ForOp> ops;
+            for(Operation& op : loop.getBody()->without_terminator())
+            {
+                auto storeOp = dyn_cast<memref::StoreOp>(&op);
+                if(storeOp)
+                {
+                    ops.push_back(storeOp);
+                }
+            }
+
+            if(ops.empty())
+            {
+                return false;
+            }
+
+            //check store op
+            bool flag = false;
+            if(op[0].getLhs() == lhs && op[0].getRhs() == rhs)
             {
                 flag = true;
             }
@@ -1495,7 +1644,6 @@ namespace
             //return
             return flag;
         }//
-        
 
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
         {
@@ -1513,11 +1661,11 @@ namespace
             }
 
             //rewrite
-
+            rewriteOps(ops);
 
             //return
             return success();    
-        }
+        }//
 
     };//
     
