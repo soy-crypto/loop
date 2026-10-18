@@ -1404,7 +1404,7 @@ namespace
             memref::StoreOp storeOp;
         }; //
 
-        std::optional<TargetOps> checkPreconditions(scf::ForOp loop) const
+        std::optional<TargetOps> findMatchedOps(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1413,32 +1413,33 @@ namespace
             }
 
             //check loop structuer
-            if(hasTargetLoop(loop) == false)
-            {
-                return std::nullopt;
-            }
-
-            //check ops
-            if(hasCorrectOps(loop) == false)
+            bool found;
+            found = isTargetLoop(loop) && hasTargetOps(loop)
+            if(!found)
             {
                 return std::nullopt;
             }
 
             //get all target ops
-            SmallVector<Operation&> ops;
+            struct TargetOps targetOps;
+            SmallVector<Operation*> ops;
             for(Operation& op : loop.getBody()->without_teminator())
             {
                 ops.push_back(&op);
             }
 
-            tarOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
+            targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
+            targetOps.mulOp = dyn_cast<arith::mulFOp>(ops[3]);
+            targetOps.addOp = dyn_cast<arith::addFOp>(ops[4]);
+            targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5]);
             
-
             //return
             return targetOps;
         }//
 
-        bool hasTargetLoop(scf::ForOp loop)
+        bool isTargetLoop(scf::ForOp loop)
         {
             //check
             auto func = loop->getParentOfType<func::FuncOp>();
@@ -1454,7 +1455,6 @@ namespace
 
             //return
             return true;
-
         }//
 
         bool hasTargetOps(scf::ForOp loop)
@@ -1590,7 +1590,7 @@ namespace
 
             //get all add ops
             SmallVector<arith::AddFOp> ops;
-            for(OperationU& op : loop.getBOdy()->without_terminator())
+            for(Operation& op : loop.getBody()->without_terminator())
             {
                 auto addOp = dyn_cast<arith::AddFOp>(&op);
                 if(addOp)
@@ -1660,15 +1660,16 @@ namespace
                 return failure();
             }
 
-            //check preconditions
-            struct MatchedOps ops = checkPreconditions(loop);
-            if(ops == nullptr)
+            //find mathced ops
+            struct MatchedOp targetOps;
+            targetOps = findMatchedOps(loop);
+            if(targetOps == nullptr)
             {
                 return failuere();
             }
 
             //rewrite
-            rewriteOps(ops);
+            rewriteOps(targetOps);
 
             //return
             return success();    
