@@ -1461,12 +1461,13 @@ namespace
         {
             //parent func
             auto func = loop->getParentOfType<func::FuncOp>();
+            SmallVector<Value> outsideValue = getOutsideValues(loop);        
 
             //running reuslt
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(checkLoadOps(loops, func, runningResuls))
+            if(checkLoadOps(loops, func, outsideValue[2], outsideValue[3], runningResuls))
             {
                 return false;
             }
@@ -1484,7 +1485,7 @@ namespace
             }
 
             //check store ops
-            if(checkStoreOps(loop, runningResults[5], func.getArgument(1), ))
+            if(checkStoreOps(loop, runningResults[5], func.getArgument(1), outsideValue[2], outsideValue[3]))
             {
                 return false;
             }
@@ -1493,7 +1494,42 @@ namespace
             return true;
         }//
 
-        bool checkLoadOps(scf::ForOp loop, func::Func func, SmallVector<> results)
+        SmallVector<Value> getOutsideValues(scf::ForOp loop)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return {};
+            }
+
+            //get gpu.lunch body
+            auto lunch = loop->getParentOfType<gpu::LaunchOp>();
+            if(launch == nullptr)
+            {
+                return {};
+            }
+
+            //get 1st block
+            SmallVector<Value> results;
+            for(Operation& op : launch.getBody().front())
+            {
+                if(op == loop)
+                {
+                    break;
+                }
+
+                for(Value result : op.getResults())
+                {
+                    result.push_back(result);
+                }
+
+            }//
+
+            //return
+            return result;
+        }
+
+        bool checkLoadOps(scf::ForOp loop, func::Func func, index i, index j, SmallVector<Value> results)
         {
             //get all of load ops
             SmallVector<memref::LoadOp> ops;
@@ -1534,7 +1570,7 @@ namespace
             //match A indicies, B indices, C incicds match the outsidde value
 
             //match gemm multiplication indicies
-            if(Ai != Ci || Aj != k || Bi != k || Bj != Cj || !loop.isDefinedOutsideOfLoop(Ci) || !loop.isDefinedOutsideOfLoop(Cj))
+            if(Ai != Ci || Aj != k || Bi != k || Bj != Cj || Ci != i || Cj != j)
             {
                 return false;
             }
@@ -1546,9 +1582,10 @@ namespace
 
             //return
             return true;
+
         }//
 
-        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs)
+        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value> results)
         {
             //check validity
             if(loop == nullptr)
@@ -1577,6 +1614,7 @@ namespace
             if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
             {
                 flag = true;
+                results.push_back(ops[0].getResult());
             }
 
             //return
@@ -1584,7 +1622,7 @@ namespace
 
         }//
 
-        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs)
+        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value> results)
         {
             //check validity
             if(loop == nullptr)
@@ -1614,6 +1652,7 @@ namespace
             if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
             {
                 flag = true;
+                results.push_back(ops[0].getResult());
             }
 
             //return
@@ -1621,7 +1660,7 @@ namespace
 
         }//
 
-        bool checkStoreOps(scf::ForOp loop, s)
+        bool checkStoreOps(scf::ForOp loop, Value lhs, Value C, index i, index j)
         {
             //check validity
             if(loop == nullptr)
@@ -1647,13 +1686,15 @@ namespace
 
             //check store op
             bool flag = false;
-            if(op[0].getValueToStore() == lhs && op[0].getMemRef() == rhs, op[0].getIndices()[0] == i && op[0].getIndices()[0] == j)
+            if(op[0].getValueToStore() == lhs && op[0].getMemRef() == C, op[0].getIndices()[0] == i && op[0].getIndices()[0] == j && op[0].getIndices()[0] == i && op[1].getIndices()[1] == j)
             {
                 flag = true;
+
             }
 
             //return
             return flag;
+
         }//
 
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
