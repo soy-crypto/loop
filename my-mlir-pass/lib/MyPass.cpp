@@ -1705,17 +1705,40 @@ namespace
                 return false;
             }
 
-            //creating a new loop
-            /** create a new inititial value */
+            //creating new ops
+            /** get old ops */
+            auto loadOp1 = targetOps.loadOp1, loadOp2 = targetOps.loadOp2, loadOp3 = targetOps.loadOp3;
+            auto mulOp = targetOps.mulOp;
+            Value C = loadOp3.getMemref();
+            Value i = loadOp3.getIndices()[0], j = loadOp3.getIndices()[1];
 
+            // create a new loop 
+            /* loop head */
+            rewriter.setInsertionPoint(loop);
+            auto initLoadOp = rewrite.create<memref::LoadOp>(loop.getLoc(), C, ValueRange{i, h});
+            auto forLoopOp = rewrite.create<scf::ForOp>(loop.getLoc(), loop.getLowerBound(), loop.getUpperBound(), loop.getStep(), ValueRange(initLoadOp));
+            if(!forLoopOp.getBody()->empty())
+            {
+                rewriter.eraseOp(forLoopOp.getBody()->getTerminator());
+            }
+            
+            /* loop body */
+            rewriter.setInsertionPointToStart(forLoopOp.getBody());
+            IRMapping mapping;
+            mapping.map(loop.getInductionVar(), forLoopOp.getInductionVar());
 
-            /** create a new loop */
-
-
-            /** create a store Op*/
-
+            rewriter.clone(*loadOp1.getOperation(), mapping);
+            rewriter.clone(*loadOp2.getOperation(), mapping);
+            auto newMulOp = dyn_cast<arith::MulFOp>(rewriter.clone(*mulOp.getOperation(), mapping));
+            auto newAddOp = rewriter.create<arith::AddOp>(targetOPs.addOp.getLoc(), newMulOp.getResult(), forLoopOp.getRegionIterArgs()[0]);
+            rewriter.create<scf::YieldOp>(forLoopOp.getLoc(), ValueRange{newAddOp.getResult()});
+            
+            /** loop outside */
+            rewriter.setInsertionAfter(forLoopOp);
+            rewriter.create<memref::StoreOp>(loop.getLoc(), forLoopOp.getResult(0), C, ValueRange{i, j});
 
             /** erase the old Ops */
+            rewriter.erase(loop);
 
             //return
             return;
@@ -1793,7 +1816,6 @@ void registerMyPass()
     PassRegistration<TilingPass>();
     PassRegistration<ToyPromoteAccumulatorPass>();
 }
-
 
 
 
