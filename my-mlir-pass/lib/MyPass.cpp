@@ -1705,7 +1705,7 @@ namespace
                 return false;
             }
 
-            //creating new ops
+            //creating new loop
             /** get old ops */
             auto loadOp1 = targetOps.loadOp1, loadOp2 = targetOps.loadOp2, loadOp3 = targetOps.loadOp3;
             auto mulOp = targetOps.mulOp;
@@ -1727,8 +1727,8 @@ namespace
             IRMapping mapping;
             mapping.map(loop.getInductionVar(), forLoopOp.getInductionVar());
 
-            rewriter.clone(*loadOp1.getOperation(), mapping);
-            rewriter.clone(*loadOp2.getOperation(), mapping);
+            rewriter.clone(*(loadOp1.getOperation()), mapping);
+            rewriter.clone(*(loadOp2.getOperation()), mapping);
             auto newMulOp = dyn_cast<arith::MulFOp>(rewriter.clone(*mulOp.getOperation(), mapping));
             auto newAddOp = rewriter.create<arith::AddOp>(targetOPs.addOp.getLoc(), newMulOp.getResult(), forLoopOp.getRegionIterArgs()[0]);
             rewriter.create<scf::YieldOp>(forLoopOp.getLoc(), ValueRange{newAddOp.getResult()});
