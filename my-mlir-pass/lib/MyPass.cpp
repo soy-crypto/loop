@@ -1705,9 +1705,20 @@ namespace
                 return false;
             }
 
-            //rewrite
-            
+            //creating a new loop
+            /** create a new inititial value */
 
+
+            /** create a new loop */
+
+
+            /** create a store Op*/
+
+
+            /** erase the old Ops */
+
+            //return
+            return;
         }
 
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
@@ -1781,78 +1792,4 @@ void registerMyPass()
     PassRegistration<FusionPass>();
     PassRegistration<TilingPass>();
     PassRegistration<ToyPromoteAccumulatorPass>();
-}
-
-
-void rewriteOps(
-    scf::ForOp loop,
-    const TargetOps &targetOps,
-    PatternRewriter &rewriter) const
-{
-    auto aLoad = targetOps.aLoad;
-    auto bLoad = targetOps.bLoad;
-    auto mulOp = targetOps.mul;
-    auto addOp = targetOps.add;
-
-    // 1. Insert the initial C load before the old loop.
-    rewriter.setInsertionPoint(loop);
-
-    auto initialLoad = rewriter.create<memref::LoadOp>(
-        loop.getLoc(),
-        targetOps.C,
-        ValueRange{targetOps.Ci, targetOps.Cj});
-
-    Value initialSum = initialLoad.getResult();
-
-    // 2. Create a new loop with an accumulator.
-    auto newLoop = rewriter.create<scf::ForOp>(
-        loop.getLoc(),
-        loop.getLowerBound(),
-        loop.getUpperBound(),
-        loop.getStep(),
-        ValueRange{initialSum});
-
-    // Remove a builder-created terminator, if present.
-    if (!newLoop.getBody()->empty())
-        rewriter.eraseOp(newLoop.getBody()->getTerminator());
-
-    rewriter.setInsertionPointToStart(newLoop.getBody());
-
-    // 3. Map old k to new k.
-    IRMapping mapping;
-    mapping.map(
-        loop.getInductionVar(),
-        newLoop.getInductionVar());
-
-    // 4. Copy A/B loads and multiply into the new loop.
-    rewriter.clone(*aLoad.getOperation(), mapping);
-    rewriter.clone(*bLoad.getOperation(), mapping);
-
-    auto newMulOp = cast<arith::MulFOp>(
-        rewriter.clone(*mulOp.getOperation(), mapping));
-
-    // 5. Add the product to the running sum.
-    Value sum = newLoop.getRegionIterArgs()[0];
-
-    auto newAddOp = rewriter.create<arith::AddFOp>(
-        addOp.getLoc(),
-        newMulOp.getResult(),
-        sum);
-
-    // 6. Yield the updated sum.
-    rewriter.create<scf::YieldOp>(
-        newLoop.getLoc(),
-        ValueRange{newAddOp.getResult()});
-
-    // 7. Store the final result after the new loop.
-    rewriter.setInsertionPointAfter(newLoop);
-
-    rewriter.create<memref::StoreOp>(
-        loop.getLoc(),
-        newLoop.getResult(0),
-        targetOps.C,
-        ValueRange{targetOps.Ci, targetOps.Cj});
-
-    // 8. Remove the old loop and its old operations.
-    rewriter.eraseOp(loop);
 }
