@@ -1697,6 +1697,19 @@ namespace
 
         }//
 
+        void rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
+        {
+            //check validity
+            if(loop == nullptr || taretOps == nullptr || rewriter == nullptr)
+            {
+                return false;
+            }
+
+            //rewrite
+            
+
+        }
+
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
         {
             //check validity
@@ -1714,10 +1727,11 @@ namespace
             }
 
             //rewrite
-            rewriteOps(targetOps);
+            rewriteOps(loop, targetOps, rewriter);
 
             //return
-            return success();    
+            return success();
+
         }//
 
     };//
