@@ -1451,13 +1451,13 @@ namespace
             }
 
             //check add ops
-            if(!checkAddOps(SmallVector<Value>& ops, runningResults[3], runningResults.[2]), &runningResults)
+            if(!checkAddOps(SmallVector<Value> ops, runningResults[3], runningResults.[2]), &runningResults)
             {
                 return false;
             }
 
             //check store ops
-            if(!checkStoreOps(SmallVector<Value>& ops, runningResults[4], func.getArgument(2), outsideValue[2], outsideValue[3]))
+            if(!checkStoreOps(SmallVector<Value> ops, runningResults[4], func.getArgument(2), outsideValue[2], outsideValue[3]))
             {
                 return false;
             }
