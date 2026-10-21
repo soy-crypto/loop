@@ -1433,13 +1433,13 @@ namespace
             //get necessary parameters
             SmallVector<Value> outsideValue = getOutsideValues(loop);
             SmallVector<Value> insideOps = getInsideOps(loop);
-            SmallVector<Value> insideMatrixs = getInsideMatrix(loop.getOpereation()->getParentOfType<func::FuncOp>());
+            SmallVector<Value> outsideMatrixs = getOutsideMatrix(loop.getOpereation()->getParentOfType<func::FuncOp>());
 
             //running reuslt
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(!checkLoadOps(SmallVector<Value> ops, func, outsideValue[2], outsideValue[3], loop.getInductionVar(), &runningResults))
+            if(!checkLoadOps(SmallVector<Value> ops, outsideValue[2], outsideValue[3], loop.getInductionVar(), &runningResults))
             {
                 return false;
             }
@@ -1520,9 +1520,25 @@ namespace
             return result;
         }
 
-        
+        SmallVector<Value> getOutsideMatrixs(scf::ForOp loop)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return {};
+            }
 
-        bool checkLoadOps(SmallVector<Operation*> ops, func::FuncOp func, Value i, Value j, Value k, SmallVector<Value>& results)
+            //get matrixs
+            SmallVector<Value> matrixs;
+            auto func = loop.getOperation()->getParentOfType<func::FuncOp>();
+            matrixs.push_back(func.getArguments(0), func.getArguments(1), func.getArguments(2));
+
+            //return
+            return matrixs;
+        }
+
+
+        bool checkLoadOps(SmallVector<Operation*> ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value> results)
         {
             //get all of load ops
             if(ops.empty())
@@ -1543,17 +1559,15 @@ namespace
                 ops.push_back(dyn_cast<memref::LoadOp>ops.begin());
                 ops.erase(ops.begin())
             }
-            
 
             //check all load ops
             Value A  = loadOps[0].getMemref(), B = loadOps[1].getMemref(), C = loadOps[2].getMemref();
             Value Ai = loadOps[0].getIndices()[0], Aj = loadOps[0].getIndices()[1];
             Value Bi = loadOps[1].getIndices()[0], Bj = loadOps[1].getIndices()[1];
             Value Ci = loadOps[2].getIndices()[0], Cj = loadOps[2].getIndices()[1];
-            Value k  = loop.getInductionVar();
 
             //match input parameters
-            if(A != func.getArgument(0) || B != func.getArgument(1) || C != func.getArgument(2))
+            if(A != matrixs[0] || B != matrixs[1] || C != matrixs[2])
             {
                 return false;
             }
@@ -1579,7 +1593,7 @@ namespace
             return true;
         }//
 
-        bool checkMulOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value>& results)
+        bool checkMulOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value> results)
         {
             //check validity
             if(loop == nullptr)
@@ -1616,7 +1630,7 @@ namespace
 
         }//
 
-        bool checkAddOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value>& results)
+        bool checkAddOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value> results)
         {
             //check validity
             if(loop == nullptr)
