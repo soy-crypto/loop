@@ -1438,25 +1438,25 @@ namespace
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(checkLoadOps(loops, func, outsideValue[2], outsideValue[3], runningResuls))
+            if(!checkLoadOps(loops, func, outsideValue[2], outsideValue[3], &runningResuls))
             {
                 return false;
             }
 
             //check mul ops
-            if(checkMulOps(loop, runningResults[0], runningResults[1]))
+            if(!checkMulOps(loop, runningResults[0], runningResults[1]), &runningResults)
             {
                 return false;
             }
 
             //check add ops
-            if(checkAddOps(loop, runningResults[3], runningResults.[2]))
+            if(!checkAddOps(loop, runningResults[3], runningResults.[2]), &runningResults)
             {
                 return false;
             }
 
             //check store ops
-            if(checkStoreOps(loop, runningResults[5], func.getArgument(1), outsideValue[2], outsideValue[3]))
+            if(!checkStoreOps(loop, runningResults[4], func.getArgument(2), outsideValue[2], outsideValue[3]))
             {
                 return false;
             }
@@ -1500,7 +1500,7 @@ namespace
             return result;
         }
 
-        bool checkLoadOps(scf::ForOp loop, func::FuncOp func, Value i, Value j, SmallVector<Value> results)
+        bool checkLoadOps(scf::ForOp loop, func::FuncOp func, Value i, Value j, SmallVector<Value>& results)
         {
             //get all of load ops
             SmallVector<memref::LoadOp> ops;
@@ -1553,7 +1553,7 @@ namespace
             return true;
         }//
 
-        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value> results)
+        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
             if(loop == nullptr)
@@ -1590,7 +1590,7 @@ namespace
 
         }//
 
-        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value> results)
+        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
             if(loop == nullptr)
@@ -1628,7 +1628,7 @@ namespace
 
         }//
 
-        bool checkStoreOps(scf::ForOp loop, Value lhs, Value C, index i, index j)
+        bool checkStoreOps(scf::ForOp loop, Value lhs, Value C, Valuei, Value j)
         {
             //check validity
             if(loop == nullptr)
