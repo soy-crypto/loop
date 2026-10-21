@@ -1538,8 +1538,6 @@ namespace
                 return false;
             }
 
-            //match A indicies, B indices, C incicds match the outsidde value
-
             //match gemm multiplication indicies
             if(Ai != Ci || Aj != k || Bi != k || Bj != Cj || Ci != i || Cj != j)
             {
@@ -1553,7 +1551,6 @@ namespace
 
             //return
             return true;
-
         }//
 
         bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value> results)
