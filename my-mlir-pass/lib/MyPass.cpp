@@ -1430,34 +1430,34 @@ namespace
 
         bool hasTargetOps(scf::ForOp loop)
         {
-            //parent func
-            auto func = loop.getOpereation()->getParentOfType<func::FuncOp>();
+            //get necessary parameters
             SmallVector<Value> outsideValue = getOutsideValues(loop);
-            SmallVector<Value> insideOps = getInsideOps(loop);     
+            SmallVector<Value> insideOps = getInsideOps(loop);
+            SmallVector<Value> insideMatrixs = getInsideMatrix(loop.getOpereation()->getParentOfType<func::FuncOp>());
 
             //running reuslt
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(!checkLoadOps(loops, func, outsideValue[2], outsideValue[3], &runningResuls))
+            if(!checkLoadOps(SmallVector<Value> ops, func, outsideValue[2], outsideValue[3], loop.getInductionVar(), &runningResults))
             {
                 return false;
             }
 
             //check mul ops
-            if(!checkMulOps(loop, runningResults[0], runningResults[1]), &runningResults)
+            if(!checkMulOps(SmallVector<Value> ops, runningResults[0], runningResults[1]), &runningResults)
             {
                 return false;
             }
 
             //check add ops
-            if(!checkAddOps(loop, runningResults[3], runningResults.[2]), &runningResults)
+            if(!checkAddOps(SmallVector<Value>& ops, runningResults[3], runningResults.[2]), &runningResults)
             {
                 return false;
             }
 
             //check store ops
-            if(!checkStoreOps(loop, runningResults[4], func.getArgument(2), outsideValue[2], outsideValue[3]))
+            if(!checkStoreOps(SmallVector<Value>& ops, runningResults[4], func.getArgument(2), outsideValue[2], outsideValue[3]))
             {
                 return false;
             }
@@ -1466,7 +1466,7 @@ namespace
             return true;
         }//
 
-        SmallVector<Value> getInsidedOps(scf::ForOp loop)
+        SmallVector<Operation*> getInsidedOps(scf::ForOp loop)
         {
             //check validity
             if(loop == nullptr)
@@ -1475,7 +1475,7 @@ namespace
             }
 
             //get all of Ops inside the body
-            SmallVector<Value> ops;
+            SmallVector<Operation*> ops;
             for(Operation& op : loop.getOperation()->without_terminator())
             {
                 ops.push_back(&op);
@@ -1520,30 +1520,36 @@ namespace
             return result;
         }
 
-        bool checkLoadOps(scf::ForOp loop, func::FuncOp func, Value i, Value j, SmallVector<Value>& results)
+        
+
+        bool checkLoadOps(SmallVector<Operation*> ops, func::FuncOp func, Value i, Value j, Value k, SmallVector<Value>& results)
         {
             //get all of load ops
-            SmallVector<memref::LoadOp> ops;
-            for(Operation& op : loop.getBody()->without_terminator())
-            {
-                auto loadOp = dyn_cast<memref::loadOp>(&op);
-                if(loadOp)
-                {
-                    ops.push_back(loadOp);
-                }
-
-            }//for 
-
             if(ops.empty())
             {
                 return false;
             }
 
+            //get all load ops
+            SmallVector<memref::LoadOp> loadOps;
+            while(true)
+            {
+                if(ops.empty())
+                {
+                    break;
+                }
+
+                //body
+                ops.push_back(dyn_cast<memref::LoadOp>ops.begin());
+                ops.erase(ops.begin())
+            }
+            
+
             //check all load ops
-            Value A  = ops[0].getMemref(), B = ops[1].getMemref(), C = ops[2].getMemref();
-            Value Ai = ops[0].getIndices()[0], Aj = ops[0].getIndices()[1];
-            Value Bi = ops[1].getIndices()[0], Bj = ops[1].getIndices()[1];
-            Value Ci = ops[2].getIndices()[0], Cj = ops[2].getIndices()[1];
+            Value A  = loadOps[0].getMemref(), B = loadOps[1].getMemref(), C = loadOps[2].getMemref();
+            Value Ai = loadOps[0].getIndices()[0], Aj = loadOps[0].getIndices()[1];
+            Value Bi = loadOps[1].getIndices()[0], Bj = loadOps[1].getIndices()[1];
+            Value Ci = loadOps[2].getIndices()[0], Cj = loadOps[2].getIndices()[1];
             Value k  = loop.getInductionVar();
 
             //match input parameters
@@ -1573,7 +1579,7 @@ namespace
             return true;
         }//
 
-        bool checkMulOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value>& results)
+        bool checkMulOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
             if(loop == nullptr)
@@ -1610,7 +1616,7 @@ namespace
 
         }//
 
-        bool checkAddOps(scf::ForOp loop, Value lhs, Value rhs, SmallVector<Value>& results)
+        bool checkAddOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
             if(loop == nullptr)
@@ -1648,7 +1654,7 @@ namespace
 
         }//
 
-        bool checkStoreOps(scf::ForOp loop, Value lhs, Value C, Valuei, Value j)
+        bool checkStoreOps(SmallVector<Value> ops, Value lhs, Value C, Valuei, Value j)
         {
             //check validity
             if(loop == nullptr)
@@ -1797,7 +1803,6 @@ namespace
     struct ToyPromoteAccumulatorPass : PassWrapper<ToyPromoteAccumulatorPass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToyPromoteAccumulatorPass);
-
         StringRef getArgument() const override
         {
             return "toy-pa";
