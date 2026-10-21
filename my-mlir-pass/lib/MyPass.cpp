@@ -1432,7 +1432,8 @@ namespace
         {
             //parent func
             auto func = loop.getOpereation()->getParentOfType<func::FuncOp>();
-            SmallVector<Value> outsideValue = getOutsideValues(loop);        
+            SmallVector<Value> outsideValue = getOutsideValues(loop);
+            SmallVector<Value> insideOps = getInsideOps(loop);     
 
             //running reuslt
             SmallVector<Value> runningResults;
@@ -1464,6 +1465,25 @@ namespace
             //return
             return true;
         }//
+
+        SmallVector<Value> getInsidedOps(scf::ForOp loop)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return {};
+            }
+
+            //get all of Ops inside the body
+            SmallVector<Value> ops;
+            for(Operation& op : loop.getOperation()->without_terminator())
+            {
+                ops.push_back(&op);
+            }
+
+            //return
+            return ops;
+        }
 
         SmallVector<Value> getOutsideValues(scf::ForOp loop)
         {
