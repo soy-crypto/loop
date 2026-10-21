@@ -1550,7 +1550,7 @@ namespace
             SmallVector<memref::LoadOp> loadOps;
             while(true)
             {
-                if(ops.empty())
+                if(ops.empty() || !isa<memref::LoadOp>(ops.begin()))
                 {
                     break;
                 }
