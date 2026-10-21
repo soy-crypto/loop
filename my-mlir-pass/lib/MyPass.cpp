@@ -1406,9 +1406,15 @@ namespace
 
         bool isTargetLoop(scf::ForOp loop)
         {
+            //check validity
+            if(loop == nullptr)
+            {
+                return false;
+            }
+
             //check
             auto func = loop.getOperation()->getParentOfType<func::FuncOp>();
-            if(func == nullptr || func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
+            if(func == nullptr || !func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
             {
                 return false;
             }
@@ -1695,7 +1701,7 @@ namespace
             
             //return
             return targetOps;
-            
+
         }//
 
         bool rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
