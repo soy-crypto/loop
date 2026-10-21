@@ -1404,45 +1404,10 @@ namespace
             memref::StoreOp storeOp;
         }; //
 
-        std::optional<TargetOps> findMatchedOps(scf::ForOp loop) const
-        {
-            //check validity
-            if(loop == nullptr)
-            {
-                return std::nullopt;
-            }
-
-            //check loop structuer
-            bool found;
-            found = isTargetLoop(loop) && hasTargetOps(loop)
-            if(!found)
-            {
-                return std::nullopt;
-            }
-
-            //get all target ops
-            struct TargetOps targetOps;
-            SmallVector<Operation*> ops;
-            for(Operation& op : loop.getBody()->without_teminator())
-            {
-                ops.push_back(&op);
-            }
-
-            targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
-            targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
-            targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
-            targetOps.mulOp = dyn_cast<arith::mulFOp>(ops[3]);
-            targetOps.addOp = dyn_cast<arith::addFOp>(ops[4]);
-            targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5]);
-            
-            //return
-            return targetOps;
-        }//
-
         bool isTargetLoop(scf::ForOp loop)
         {
             //check
-            auto func = loop->getParentOfType<func::FuncOp>();
+            auto func = loop.getOperation()->getParentOfType<func::FuncOp>();
             if(func == nullptr || func->hasAttr("toy.accumulator_safe") || func.getNumArguments() != 3 || loop.getNumResults() != 0 || !loop->getAttrs().empty())
             {
                 return false;
@@ -1460,7 +1425,7 @@ namespace
         bool hasTargetOps(scf::ForOp loop)
         {
             //parent func
-            auto func = loop->getParentOfType<func::FuncOp>();
+            auto func = loop.getOpereation()->getParentOfType<func::FuncOp>();
             SmallVector<Value> outsideValue = getOutsideValues(loop);        
 
             //running reuslt
@@ -1503,7 +1468,7 @@ namespace
             }
 
             //get gpu.lunch body
-            auto lunch = loop->getParentOfType<gpu::LaunchOp>();
+            auto lunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
             if(launch == nullptr)
             {
                 return {};
@@ -1529,7 +1494,7 @@ namespace
             return result;
         }
 
-        bool checkLoadOps(scf::ForOp loop, func::Func func, index i, index j, SmallVector<Value> results)
+        bool checkLoadOps(scf::ForOp loop, func::FuncOp func, Value i, Value j, SmallVector<Value> results)
         {
             //get all of load ops
             SmallVector<memref::LoadOp> ops;
@@ -1549,11 +1514,11 @@ namespace
             }
 
             //check all load ops
-            Value A = ops[0].getMemref(), B = ops[1].getMemref(), C = ops[2].getMemref();
-            index Ai = ops[0].getIndices()[0], Aj = ops[0].getIndices()[1];
-            index Bi = ops[1].getIndices()[0], Bj = ops[1].getIndices()[1];
-            index Ci = ops[2].getIndices()[0], Cj = ops[2].getIndices()[1];
-            index k = loop.getInductionVar();
+            Value A  = ops[0].getMemref(), B = ops[1].getMemref(), C = ops[2].getMemref();
+            Value Ai = ops[0].getIndices()[0], Aj = ops[0].getIndices()[1];
+            Value Bi = ops[1].getIndices()[0], Bj = ops[1].getIndices()[1];
+            Value Ci = ops[2].getIndices()[0], Cj = ops[2].getIndices()[1];
+            Value k  = loop.getInductionVar();
 
             //match input parameters
             if(A != func.getArgument(0) || B != func.getArgument(1) || C != func.getArgument(2))
@@ -1695,6 +1660,41 @@ namespace
             //return
             return flag;
 
+        }//
+
+        std::optional<TargetOps> findMatchedOps(scf::ForOp loop) const
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return std::nullopt;
+            }
+
+            //check loop structuer
+            bool found;
+            found = isTargetLoop(loop) && hasTargetOps(loop)
+            if(!found)
+            {
+                return std::nullopt;
+            }
+
+            //get all target ops
+            struct TargetOps targetOps;
+            SmallVector<Operation*> ops;
+            for(Operation& op : loop.getBody()->without_teminator())
+            {
+                ops.push_back(&op);
+            }
+
+            targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
+            targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
+            targetOps.mulOp   = dyn_cast<arith::mulFOp>(ops[3]);
+            targetOps.addOp   = dyn_cast<arith::addFOp>(ops[4]);
+            targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5]);
+            
+            //return
+            return targetOps;
         }//
 
         void rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
