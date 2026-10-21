@@ -1695,12 +1695,13 @@ namespace
             
             //return
             return targetOps;
+            
         }//
 
-        void rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
+        bool rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
         {
             //check validity
-            if(loop == nullptr || taretOps == nullptr || rewriter == nullptr)
+            if(loop == nullptr)
             {
                 return false;
             }
