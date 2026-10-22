@@ -18,6 +18,7 @@
 #include "mlir/Interfaces/TilingInterface.h"
 #include "llvm/Support/raw_ostream.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
+#include "mlir/Dialect/GPU/IR/GPUDialect.h"
 
 #include <string>
 #include <cstdint>
