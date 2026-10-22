@@ -1435,6 +1435,10 @@ namespace
             SmallVector<Value> outsideValue = getOutsideValues(loop);
             SmallVector<Operation*> insideOps = getInsideOps(loop);
             SmallVector<Value> outsideMatrixs = getOutsideMatrixs(loop);
+            if(outsideValue.size() != 4)
+            {
+                return false;
+            }
 
             //running reuslt
             SmallVector<Value> runningResults;
@@ -1464,7 +1468,7 @@ namespace
             }
             
             //return
-            return true;
+            return insideOps.empty();
         }//
 
         SmallVector<Operation*> getInsideOps(scf::ForOp loop) const
@@ -1544,7 +1548,7 @@ namespace
         bool checkLoadOps(SmallVector<Operation*>& ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value>& results) const
         {
             //get all of load ops
-            if(ops.empty() || ops.size() != 3 || matrixs.size() != 3)
+            if(ops.empty() || matrixs.size() != 3)
             {
                 return false;
             }
@@ -1563,6 +1567,20 @@ namespace
                 ops.erase(ops.begin());
             }
 
+            if(loadOps.size() != 3)
+            {
+                return false;
+            }
+
+             //match two indicies
+            for(memref::LoadOp loadOp : loadOps)
+            {
+                if(loadOp.getIndices().size() != 2)
+                {
+                    return false;
+                }
+            }
+
             //check all load ops
             Value A  = loadOps[0].getMemref(), B = loadOps[1].getMemref(), C = loadOps[2].getMemref();
             Value Ai = loadOps[0].getIndices()[0], Aj = loadOps[0].getIndices()[1];
@@ -1575,14 +1593,7 @@ namespace
                 return false;
             }
             
-            //match two indicies
-            for(memref::LoadOp loadOp : loadOps)
-            {
-                if(loadOp.getIndices().size() != 2)
-                {
-                    return false;
-                }
-            }
+           
 
             //match gemm multiplication indicies
             if(Ai != Ci || Aj != k || Bi != k || Bj != Cj || Ci != i || Cj != j)
@@ -1619,6 +1630,11 @@ namespace
                 //body
                 mulOps.push_back(dyn_cast<arith::MulFOp>(ops.front()));
                 ops.erase(ops.begin());
+            }
+
+            if(mulOps.size() != 1)
+            {
+                return false;
             }
 
             //check mul ops
@@ -1696,7 +1712,7 @@ namespace
                 ops.erase(ops.begin());
             }
 
-            if(ops.size() != 1)
+            if(storeOps.size() != 1)
             {
                 return false;
             }
