@@ -1439,25 +1439,25 @@ namespace
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(!checkLoadOps(SmallVector<Operation*> insideOps, outsideValue[2], outsideValue[3], loop.getInductionVar(), runningResults))
+            if(!checkLoadOps(insideOps, outsideMatrixs, outsideValue[2], outsideValue[3], loop.getInductionVar(), runningResults))
             {
                 return false;
             }
 
             //check mul ops
-            if(!checkMulOps(SmallVector<Operation*> insideOps, runningResults[0], runningResults[1], runningResults))
+            if(!checkMulOps(insideOps, runningResults[0], runningResults[1], runningResults))
             {
                 return false;
             }
 
             //check add ops
-            if(!checkAddOps(SmallVector<Operation*> insideOps, runningResults[3], runningResults[2], runningResults))
+            if(!checkAddOps(insideOps, runningResults[3], runningResults[2], runningResults))
             {
                 return false;
             }
 
             //check store ops
-            if(!checkStoreOps(SmallVector<Operation*> insideOps, runningResults[4], outsideMatrixs[2], outsideValue[2], outsideValue[3]))
+            if(!checkStoreOps(insideOps, runningResults[4], outsideMatrixs[2], outsideValue[2], outsideValue[3]))
             {
                 return false;
             }
@@ -1531,7 +1531,7 @@ namespace
             //get matrixs
             SmallVector<Value> matrixs;
             auto func = loop.getOperation()->getParentOfType<func::FuncOp>();
-            for(int_64 i = 0; i < 3; i++)
+            for(int i = 0; i < 3; i++)
             {
                 matrixs.push_back(func.getArgument(i));
             }
@@ -1642,10 +1642,10 @@ namespace
             }
 
             //get all mulops
-            SmallVector<arith::addFOp> addOps;
+            SmallVector<arith::AddFOp> addOps;
             while(true)
             {
-                if(ops.empty() || !isa<arith::addFOp>(ops.front()))
+                if(ops.empty() || !isa<arith::AddFOp>(ops.front()))
                 {
                     break;
                 }
@@ -1702,7 +1702,7 @@ namespace
 
             //check store op
             bool flag = false;
-            if(storeOps[0].getValue() == lhs && storeOps[0].getMemRef() == C && storeOps[0].getIndices()[0] == i && storeOps[0].getIndices()[0] == j && storeOps[0].getIndices()[0] == i && storeOps[1].getIndices()[1] == j)
+            if(storeOps[0].getValue() == lhs && storeOps[0].getMemref() == C && storeOps[0].getIndices()[0] == i && storeOps[0].getIndices()[1] == j)
             {
                 flag = true;
 
@@ -1724,23 +1724,23 @@ namespace
             //get all target ops
             struct TargetOps targetOps;
             SmallVector<Operation*> ops = getInsideOps(loop);
-            targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0].loadOp1);
-            targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1].loadOp2);
-            targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2].loadOp3);
-            targetOps.mulOp   = dyn_cast<arith::mulFOp>(ops[3].mulOp);
-            targetOps.addOp   = dyn_cast<arith::addFOp>(ops[4].addOp);
-            targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5].storeOp);
+            targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
+            targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
+            targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
+            targetOps.mulOp   = dyn_cast<arith::mulFOp>(ops[3]);
+            targetOps.addOp   = dyn_cast<arith::addFOp>(ops[4]);
+            targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5]);
             
             //return
             return targetOps;
         }//
 
-        bool rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
+        void rewriteOps(scf::ForOp loop, const TargetOps &targetOps, PatternRewriter &rewriter) const
         {
             //check validity
             if(loop == nullptr)
             {
-                return false;
+                return;
             }
 
             //creating new loop
@@ -1792,7 +1792,7 @@ namespace
 
             //find mathced ops
             auto targetOps = findMatchedOps(loop);
-            if(targetOps == nullptr)
+            if(!targetOps.has_value())
             {
                 return failure();
             }
