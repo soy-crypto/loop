@@ -1404,7 +1404,7 @@ namespace
             memref::StoreOp storeOp;
         }; //
 
-        bool isTargetLoop(scf::ForOp loop)
+        bool isTargetLoop(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1428,7 +1428,7 @@ namespace
             return true;
         }//
 
-        bool hasTargetOps(scf::ForOp loop)
+        bool hasTargetOps(scf::ForOp loop) const
         {
             //get necessary parameters
             SmallVector<Value> outsideValue = getOutsideValues(loop);
@@ -1466,7 +1466,7 @@ namespace
             return true;
         }//
 
-        SmallVector<Operation*> getInsideOps(scf::ForOp loop)
+        SmallVector<Operation*> getInsideOps(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1485,7 +1485,7 @@ namespace
             return ops;
         }
 
-        SmallVector<Value> getOutsideValues(scf::ForOp loop)
+        SmallVector<Value> getOutsideValues(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1520,7 +1520,7 @@ namespace
             return results;
         }
 
-        SmallVector<Value> getOutsideMatrixs(scf::ForOp loop)
+        SmallVector<Value> getOutsideMatrixs(scf::ForOp loop) const
         {
             //check validity
             if(loop == nullptr)
@@ -1540,7 +1540,7 @@ namespace
             return matrixs;
         }
 
-        bool checkLoadOps(SmallVector<Operation*>& ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value>& results)
+        bool checkLoadOps(SmallVector<Operation*>& ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value>& results) const
         {
             //get all of load ops
             if(ops.empty() || ops.size() != 3 || matrixs.size() != 3)
@@ -1633,7 +1633,7 @@ namespace
 
         }//
 
-        bool checkAddOps(SmallVector<Operation*>& ops, Value lhs, Value rhs, SmallVector<Value>& results)
+        bool checkAddOps(SmallVector<Operation*>& ops, Value lhs, Value rhs, SmallVector<Value>& results) const
         {
             //check validity
             if(ops.empty())
@@ -1651,7 +1651,7 @@ namespace
                 }
 
                 //body
-                addOps.push_back(dyn_cast<arith::addFOp>(ops.front()));
+                addOps.push_back(dyn_cast<arith::AddFOp>(ops.front()));
                 ops.erase(ops.begin());
             }
 
@@ -1673,7 +1673,7 @@ namespace
 
         }//
 
-        bool checkStoreOps(SmallVector<Operation*>& ops, Value lhs, Value C, Value i, Value j)
+        bool checkStoreOps(SmallVector<Operation*>& ops, Value lhs, Value C, Value i, Value j) const
         {
             //check validity
             if(ops.empty())
@@ -1727,8 +1727,8 @@ namespace
             targetOps.loadOp1 = dyn_cast<memref::LoadOp>(ops[0]);
             targetOps.loadOp2 = dyn_cast<memref::LoadOp>(ops[1]);
             targetOps.loadOp3 = dyn_cast<memref::LoadOp>(ops[2]);
-            targetOps.mulOp   = dyn_cast<arith::mulFOp>(ops[3]);
-            targetOps.addOp   = dyn_cast<arith::addFOp>(ops[4]);
+            targetOps.mulOp   = dyn_cast<arith::MulFOp>(ops[3]);
+            targetOps.addOp   = dyn_cast<arith::AddFOp>(ops[4]);
             targetOps.storeOp = dyn_cast<memref::StoreOp>(ops[5]);
             
             //return
