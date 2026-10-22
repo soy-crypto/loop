@@ -1540,7 +1540,7 @@ namespace
         bool checkLoadOps(SmallVector<Operation*>& ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value>& results)
         {
             //get all of load ops
-            if(ops.empty())
+            if(ops.empty() || ops.size() != 3 || matrixs.size()s != 3)
             {
                 return false;
             }
@@ -1555,7 +1555,7 @@ namespace
                 }
 
                 //body
-                loadOps.push_back(dyn_cast<memref::LoadOp>ops.begin());
+                loadOps.push_back(dyn_cast<memref::LoadOp>ops.front());
                 ops.erase(ops.begin())
             }
 
@@ -1572,9 +1572,12 @@ namespace
             }
             
             //match two indicies
-            if(ops[0].getIndices().size() != 2 || ops[1].getIndices().size() != 2 || ops[2].getIndices().size() != 2)
+            for(memref::LoadOp loadOp : loadOps)
             {
-                return false;
+                if(loadOp.getIndicies().size() != 2)
+                {
+                    return false;
+                }
             }
 
             //match gemm multiplication indicies
