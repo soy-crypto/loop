@@ -1432,26 +1432,26 @@ namespace
         {
             //get necessary parameters
             SmallVector<Value> outsideValue = getOutsideValues(loop);
-            SmallVector<Value> insideOps = getInsideOps(loop);
+            SmallVector<Operation*> insideOps = getInsideOps(loop);
             SmallVector<Value> outsideMatrixs = getOutsideMatrix(loop.getOpereation()->getParentOfType<func::FuncOp>());
 
             //running reuslt
             SmallVector<Value> runningResults;
 
             //check load ops
-            if(!checkLoadOps(SmallVector<Value> ops, outsideValue[2], outsideValue[3], loop.getInductionVar(), &runningResults))
+            if(!checkLoadOps(SmallVector<Value> ops, outsideValue[2], outsideValue[3], loop.getInductionVar(), runningResults))
             {
                 return false;
             }
 
             //check mul ops
-            if(!checkMulOps(SmallVector<Value> ops, runningResults[0], runningResults[1]), &runningResults)
+            if(!checkMulOps(SmallVector<Value> ops, runningResults[0], runningResults[1]), runningResults)
             {
                 return false;
             }
 
             //check add ops
-            if(!checkAddOps(SmallVector<Value> ops, runningResults[3], runningResults.[2]), &runningResults)
+            if(!checkAddOps(SmallVector<Value> ops, runningResults[3], runningResults.[2]), runningResults)
             {
                 return false;
             }
@@ -1466,7 +1466,7 @@ namespace
             return true;
         }//
 
-        SmallVector<Operation*> getInsidedOps(scf::ForOp loop)
+        SmallVector<Operation*> getInsideOps(scf::ForOp loop)
         {
             //check validity
             if(loop == nullptr)
@@ -1476,7 +1476,7 @@ namespace
 
             //get all of Ops inside the body
             SmallVector<Operation*> ops;
-            for(Operation& op : loop.getOperation()->without_terminator())
+            for(Operation& op : loop.getBody()->without_terminator())
             {
                 ops.push_back(&op);
             }
@@ -1537,8 +1537,7 @@ namespace
             return matrixs;
         }
 
-
-        bool checkLoadOps(SmallVector<Operation*> ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value> results)
+        bool checkLoadOps(SmallVector<Operation*>& ops, SmallVector<Value> matrixs, Value i, Value j, Value k, SmallVector<Value>& results)
         {
             //get all of load ops
             if(ops.empty())
@@ -1550,13 +1549,13 @@ namespace
             SmallVector<memref::LoadOp> loadOps;
             while(true)
             {
-                if(ops.empty() || !isa<memref::LoadOp>(ops.begin()))
+                if(ops.empty() || !isa<memref::LoadOp>(ops.front()))
                 {
                     break;
                 }
 
                 //body
-                ops.push_back(dyn_cast<memref::LoadOp>ops.begin());
+                loadOps.push_back(dyn_cast<memref::LoadOp>ops.begin());
                 ops.erase(ops.begin())
             }
 
@@ -1585,44 +1584,42 @@ namespace
             }
             
             //update retunr value;
-            results.push_back(ops[0].getResult());
-            results.push_back(ops[1].getResult());
-            results.push_back(ops[2].getResult());
+            results.push_back(loadOps[0].getResult());
+            results.push_back(loadOps[1].getResult());
+            results.push_back(loadOps[2].getResult());
 
             //return
             return true;
         }//
 
-        bool checkMulOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value> results)
+        bool checkMulOps(SmallVector<Operation*>& ops, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
-            if(loop == nullptr)
-            {
-                return false;
-            }
-
-            //get all mulops
-            SmallVectors<arith::MulFOp> ops;
-            for(Operation& op : loop.getBody()->without_terminator())
-            {
-                auto mulOp = dyn_cast<arith::MulFOp>(&op);
-                if(mulOp)
-                {
-                    ops.push_back(mulOp);
-                }
-            }
-
             if(ops.empty())
             {
                 return false;
             }
 
+            //get all mulops
+            SmallVector<arith::MulFOp> mulOps;
+            while(true)
+            {
+                if(ops.empty() || !isa<arith::MulFOp>(ops.begin()))
+                {
+                    break;
+                }
+
+                //body
+                mulOps.push_back(dyn_cast<arith::MulFOp>ops.begin());
+                ops.erase(ops.begin())
+            }
+
             //check mul ops
             bool flag = false;
-            if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
+            if(mulOps[0].getLhs() == lhs && mulOps[0].getRhs() == rhs)
             {
                 flag = true;
-                results.push_back(ops[0].getResult());
+                results.push_back(mulOps[0].getResult());
             }
 
             //return
@@ -1630,37 +1627,34 @@ namespace
 
         }//
 
-        bool checkAddOps(SmallVector<Value> ops, Value lhs, Value rhs, SmallVector<Value> results)
+        bool checkAddOps(SmallVector<Operation*>& ops, Value lhs, Value rhs, SmallVector<Value>& results)
         {
             //check validity
-            if(loop == nullptr)
-            {
-                return false;
-            }
-
-            //get all add ops
-            SmallVector<arith::AddFOp> ops;
-            for(Operation& op : loop.getBody()->without_terminator())
-            {
-                auto addOp = dyn_cast<arith::AddFOp>(&op);
-                if(addOp)
-                {
-                    ops.push_back(addOp);
-                }
-
-            }
-            
             if(ops.empty())
             {
                 return false;
             }
 
+            //get all mulops
+            SmallVector<arith::addFOp> addOps;
+            while(true)
+            {
+                if(ops.empty() || !isa<arith::addFOp>(ops.begin()))
+                {
+                    break;
+                }
+
+                //body
+                addOps.push_back(dyn_cast<arith::addFOp>ops.begin());
+                ops.erase(ops.begin())
+            }
+
             //check add ops
             bool flag = false;
-            if(ops[0].getLhs() == lhs && ops[0].getRhs() == rhs)
+            if(addOps[0].getLhs() == lhs && addOps[0].getRhs() == rhs)
             {
                 flag = true;
-                results.push_back(ops[0].getResult());
+                results.push_back(addOps[0].getResult());
             }
 
             //return
@@ -1668,33 +1662,31 @@ namespace
 
         }//
 
-        bool checkStoreOps(SmallVector<Value> ops, Value lhs, Value C, Valuei, Value j)
+        bool checkStoreOps(SmallVector<Operation*>& ops, Value lhs, Value C, Value i, Value j)
         {
             //check validity
-            if(loop == nullptr)
-            {
-                return false;
-            }
-
-            //get store ops
-            SmallVector<scf::ForOp> ops;
-            for(Operation& op : loop.getBody()->without_terminator())
-            {
-                auto storeOp = dyn_cast<memref::StoreOp>(&op);
-                if(storeOp)
-                {
-                    ops.push_back(storeOp);
-                }
-            }
-
             if(ops.empty())
             {
                 return false;
             }
 
+            //get all mulops
+            SmallVector<memref::StoreFOp> storeOps;
+            while(true)
+            {
+                if(ops.empty() || !isa<memref::StoreFOp>(ops.begin()))
+                {
+                    break;
+                }
+
+                //body
+                storeOps.push_back(dyn_cast<memref::StoreFOp>ops.begin());
+                ops.erase(ops.begin())
+            }
+
             //check store op
             bool flag = false;
-            if(op[0].getValueToStore() == lhs && op[0].getMemRef() == C, op[0].getIndices()[0] == i && op[0].getIndices()[0] == j && op[0].getIndices()[0] == i && op[1].getIndices()[1] == j)
+            if(storeOps[0].getValueToStore() == lhs && storeOps[0].getMemRef() == C, storeOps[0].getIndices()[0] == i && storeOps[0].getIndices()[0] == j && storeOps[0].getIndices()[0] == i && storeOps[1].getIndices()[1] == j)
             {
                 flag = true;
 
