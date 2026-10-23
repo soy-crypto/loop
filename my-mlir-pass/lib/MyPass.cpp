@@ -1799,7 +1799,7 @@ namespace
             return;
         }
 
-        gpu::LaunchOp findMatchedLaunch(scf::ForOp loop)
+        gpu::LaunchOp findMatchedLaunch(scf::ForOp loop) const
         {
             //find 
             auto launch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
