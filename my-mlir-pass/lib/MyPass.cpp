@@ -1770,8 +1770,9 @@ namespace
             // create a new loop 
             /* loop head */
             rewriter.setInsertionPoint(loop);
-            auto initLoadOp = rewriter.create<memref::LoadOp>(loop.getLoc(), C, ValueRange{i, j});
-            auto forLoopOp = rewriter.create<scf::ForOp>(loop.getLoc(), loop.getLowerBound(), loop.getUpperBound(), loop.getStep(), ValueRange(initLoadOp.getResult()));
+            //auto initLoadOp = rewriter.create<memref::LoadOp>(loop.getLoc(), C, ValueRange{i, j});
+            auto constantZeroOp = rewriter.create<arith::ConstantOp>(loop.getLoc(), rewriter.getF32FloatAttr(0.0));
+            auto forLoopOp = rewriter.create<scf::ForOp>(loop.getLoc(), loop.getLowerBound(), loop.getUpperBound(), loop.getStep(), ValueRange(constantZeroOp.getResult()));
             if(!forLoopOp.getBody()->empty())
             {
                 rewriter.eraseOp(forLoopOp.getBody()->getTerminator());
@@ -1808,7 +1809,7 @@ namespace
                 return {};
             }
 
-            auto curNode = lunch.getOperation()->getPrevNode();
+            auto curNode = launch.getOperation()->getPrevNode();
             while(true)
             {
                 if(curNode == nullptr || isa<gpu::LaunchOp>(curNode))
@@ -1838,7 +1839,7 @@ namespace
             }
 
             //rewrite
-            rewriter.erase(lunchFunc);
+            rewriter.eraseOp(lunchFunc);
 
             //return
             return;
