@@ -1802,7 +1802,13 @@ namespace
         gpu::LaunchOp findMatchedLaunch(scf::ForOp loop)
         {
             //find 
-            auto curNode = (loop.getOperation()->getParentOfType<gpu::LaunchOp>()).getOperation()->getPrevNode()
+            auto lunch = (loop.getOperation()->getParentOfType<gpu::LaunchOp>());
+            if(!lunch)
+            {
+                return {};
+            }
+
+            auto curNode = lunch.getOperation()->getPrevNode();
             while(true)
             {
                 if(curNode == nullptr || isa<gpu::LaunchOp>(curNode))
@@ -1811,6 +1817,11 @@ namespace
                 }
 
                 curNode = curNode->getPrevNode();
+            }
+
+            if(curNode == nullptr)
+            {
+                return {};
             }
             
             //return
