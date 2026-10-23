@@ -1802,7 +1802,7 @@ namespace
         gpu::LaunchOp findMatchedLaunch(scf::ForOp loop)
         {
             //find 
-            auto lunch = (loop.getOperation()->getParentOfType<gpu::LaunchOp>());
+            auto lunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
             if(!lunch)
             {
                 return {};
