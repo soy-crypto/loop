@@ -1828,8 +1828,11 @@ namespace
             return dyn_cast<gpu::LaunchOp>(curNode);
         }
 
+        
+
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
         {
+            //locate
             auto lunchFunc = findMatchedLaunch(loop);
             if(lunchFunc == nullptr)
             {
@@ -1838,6 +1841,9 @@ namespace
 
             //rewrite
             removeZeroLqaunch(lunchFunc, rewriter);
+
+            //return
+            return;
         }
 
         LogicalResult addAccumulator(scf::ForOp loop, PatternRewriter &rewriter) const
