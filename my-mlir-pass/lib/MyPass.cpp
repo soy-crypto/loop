@@ -1907,7 +1907,6 @@ namespace
         }//void
 
     }; // struct
-    
 
 }//namespace
 
