@@ -1802,8 +1802,8 @@ namespace
         gpu::LaunchOp findMatchedLaunch(scf::ForOp loop)
         {
             //find 
-            auto lunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
-            if(!lunch)
+            auto launch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
+            if(!launch)
             {
                 return {};
             }
@@ -1828,8 +1828,11 @@ namespace
             return dyn_cast<gpu::LaunchOp>(curNode);
         }
 
+        void removeZeroLaunch(gpu::LaunchOp launch, PatternRewriter &rewriter) const
+        {
+            if()    
+        }
         
-
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
         {
             //locate
@@ -1840,7 +1843,7 @@ namespace
             }
 
             //rewrite
-            removeZeroLqaunch(lunchFunc, rewriter);
+            removeZeroLaunch(lunchFunc, rewriter);
 
             //return
             return;
