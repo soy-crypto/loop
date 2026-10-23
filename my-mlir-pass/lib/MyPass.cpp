@@ -1833,7 +1833,7 @@ namespace
         {
             
         }
-        
+
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
         {
             //locate
@@ -1934,4 +1934,102 @@ void registerMyPass()
     PassRegistration<FusionPass>();
     PassRegistration<TilingPass>();
     PassRegistration<ToyPromoteAccumulatorPass>();
+}
+
+
+bool hasZeroFilling(scf::ForOp loop) const
+{
+    // 1. Check the original GEMM loop.
+    auto targetOps = findMatchedOps(loop);
+    if (!targetOps)
+        return false;
+
+    auto gemmLaunch = loop->getParentOfType<gpu::LaunchOp>();
+    auto fillLaunch = findMatchedLaunch(loop);
+
+    if (!gemmLaunch || !fillLaunch)
+        return false;
+
+    // 2. Require no operations between the launches.
+    if (fillLaunch->getNextNode() != gemmLaunch.getOperation())
+        return false;
+
+    // 3. Require synchronous launches and our fixed dimensions.
+    for (gpu::LaunchOp launch : {fillLaunch, gemmLaunch})
+    {
+        if (launch->getNumResults() != 0 ||
+            !launch.getAsyncDependencies().empty() ||
+            launch.getBody().getBlocks().size() != 1)
+        {
+            return false;
+        }
+
+        auto grid = launch.getGridSizeOperandValues();
+        auto block = launch.getBlockSizeOperandValues();
+
+        if (!isConstantIntValue(grid.x, 8) ||
+            !isConstantIntValue(grid.y, 8) ||
+            !isConstantIntValue(grid.z, 1) ||
+            !isConstantIntValue(block.x, 8) ||
+            !isConstantIntValue(block.y, 8) ||
+            !isConstantIntValue(block.z, 1))
+        {
+            return false;
+        }
+    }
+
+    // 4. Check C's shape and the zero-fill body.
+    auto cLoad = targetOps->loadOp3;
+    Value C = cLoad.getMemref();
+    auto type = cast<MemRefType>(C.getType());
+
+    if (type.getRank() != 2 || type.getDimSize(0) != 64 || type.getDimSize(1) != 64 || !type.getElementType().isF32())
+    {
+        return false;
+    }
+
+    if (!hasZeroFillBody(fillLaunch, C))
+        return false;
+
+    // 5. Check the GEMM launch contains only its index
+    // calculations, the matched loop and its terminator.
+    Block &body = gemmLaunch.getBody().front();
+    if (body.empty() ||
+        !isa<gpu::TerminatorOp>(&body.back()))
+        return false;
+
+    SmallVector<Operation *> ops;
+    for (Operation &op : body.without_terminator())
+        ops.push_back(&op);
+
+    if (ops.size() != 5 || ops[4] != loop.getOperation())
+        return false;
+
+    auto rowBase = dyn_cast<affine::AffineApplyOp>(ops[0]);
+    auto colBase = dyn_cast<affine::AffineApplyOp>(ops[1]);
+    auto row = dyn_cast<arith::AddIOp>(ops[2]);
+    auto col = dyn_cast<arith::AddIOp>(ops[3]);
+
+    if (!rowBase || !colBase || !row || !col)
+        return false;
+
+    // 6. Verify GEMM uses the same coordinate formulas.
+    auto expectedMap = AffineMap::get(0, 1, getAffineSymbolExpr(0, loop.getContext()) * 8);
+    if (rowBase.getAffineMap() != expectedMap ||
+        colBase.getAffineMap() != expectedMap ||
+        rowBase.getMapOperands().size() != 1 ||
+        colBase.getMapOperands().size() != 1)
+        return false;
+
+    auto blocks = gemmLaunch.getBlockIds();
+    auto threads = gemmLaunch.getThreadIds();
+
+    return rowBase.getMapOperands()[0] == blocks.x &&
+           colBase.getMapOperands()[0] == blocks.y &&
+           row.getLhs() == threads.x &&
+           row.getRhs() == rowBase.getResult() &&
+           col.getLhs() == threads.y &&
+           col.getRhs() == colBase.getResult() &&
+           cLoad.getIndices()[0] == row.getResult() &&
+           cLoad.getIndices()[1] == col.getResult();
 }
