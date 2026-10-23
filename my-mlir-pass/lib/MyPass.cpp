@@ -1799,23 +1799,22 @@ namespace
             return;
         }
 
-        gpu::launchOp findMatchedLaunch(scf::ForOp loop)
+        gpu::LaunchOp findMatchedLaunch(scf::ForOp loop)
         {
             //find 
             auto curNode = (loop.getOperation()->getParentOfType<gpu::LaunchOp>()).getOperation()->getPrevNode()
             while(true)
             {
-                if(curNode == nullptr || isa<gpu::launchOp>(curNode))
+                if(curNode == nullptr || isa<gpu::LaunchOp>(curNode))
                 {
                     break;
                 }
 
-                curNode = curNode.getOperation()->getPrevNode();
+                curNode = curNode->getPrevNode();
             }
-
-            auto rightLaunch = dyn_cast<gpu::launchOp>(curNode);
-
-            return rightLaunch;
+            
+            //return
+            return dyn_cast<gpu::LaunchOp>(curNode);
         }
 
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
