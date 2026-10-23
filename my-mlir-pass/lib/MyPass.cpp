@@ -1799,9 +1799,23 @@ namespace
             return;
         }
 
-        gpu::launch findMatchedLaunch(scf::ForOp)
+        gpu::launchOp findMatchedLaunch(scf::ForOp loop)
         {
-            
+            //find 
+            auto curNode = (loop.getOperation()->getParentOfType<gpu::LaunchOp>()).getOperation()->getPrevNode()
+            while(true)
+            {
+                if(curNode == nullptr || isa<gpu::launchOp>(curNode))
+                {
+                    break;
+                }
+
+                curNode = curNode.getOperation()->getPrevNode();
+            }
+
+            auto rightLaunch = dyn_cast<gpu::launchOp>(curNode);
+
+            return rightLaunch;
         }
 
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
