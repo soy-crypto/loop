@@ -1827,11 +1827,6 @@ namespace
             //return
             return dyn_cast<gpu::LaunchOp>(curNode);
         }
-
-        void removeZeroLaunch(gpu::LaunchOp launch, PatternRewriter &rewriter) const
-        {
-            if()    
-        }
         
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
         {
@@ -1843,7 +1838,7 @@ namespace
             }
 
             //rewrite
-            removeZeroLaunch(lunchFunc, rewriter);
+            rewriter.erase(lunchFunc);
 
             //return
             return;
