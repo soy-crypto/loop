@@ -1829,6 +1829,11 @@ namespace
             return dyn_cast<gpu::LaunchOp>(curNode);
         }
         
+        bool hasZeroFilling(scf::ForOp loop)
+        {
+            
+        }
+        
         void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
         {
             //locate
@@ -1869,15 +1874,19 @@ namespace
                 return failure();
             }
 
-            /** Optimization 1: removing zero filling */
-            removeZerosFilling(loop, rewriter);
+            LogicalResult flag = failure();
+            if(hasZeroFilling(loop))
+            {
+                /** Optimization 1: removing zero filling */
+                removeZerosFilling(loop, rewriter);
 
-            /** Optimizaiton 2: adding built-in accumulator */
-            LogicalResult flag2 = addAccumulator(loop, rewriter);
+                /** Optimizaiton 2: adding built-in accumulator */
+                flag = addAccumulator(loop, rewriter);
 
+            }
 
             //return
-            return flag2;
+            return flag;
         }//
 
     };//
