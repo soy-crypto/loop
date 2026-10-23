@@ -1799,14 +1799,25 @@ namespace
             return;
         }
 
-        LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
+        gpu::launch findMatchedLaunch(scf::ForOp)
         {
-            //check validity
-            if(loop == nullptr)
+            
+        }
+
+        void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
+        {
+            auto lunchFunc = findMatchedLaunch(loop);
+            if(lunchFunc == nullptr)
             {
-                return failure();
+                return;
             }
 
+            //rewrite
+            removeZeroLqaunch(lunchFunc, rewriter);
+        }
+
+        LogicalResult addAccumulator(scf::ForOp loop, PatternRewriter &rewriter) const
+        {
             //find mathced ops
             auto targetOps = findMatchedOps(loop);
             if(!targetOps.has_value())
@@ -1819,6 +1830,25 @@ namespace
 
             //return
             return success();
+        }
+
+        LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return failure();
+            }
+
+            /** Optimization 1: removing zero filling */
+            removeZerosFilling(loop, rewriter);
+
+            /** Optimizaiton 2: adding built-in accumulator */
+            LogicalResult flag2 = addAccumulator(loop, rewriter);
+
+
+            //return
+            return flag2;
         }//
 
     };//
