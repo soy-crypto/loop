@@ -1926,9 +1926,9 @@ namespace
             }
 
             //check
-            func = loop.getOperation()->getParentOfType<func::FuncOp>(fillLaunch);
-            Value bufferC = func.getArgument(2);
-            if(!isMatchedFillOps(fillOps, bfuferC))
+            auto funcOp = fillLaunch.getOperation()->getParentOfType<func::FuncOp>();
+            Value bufferC = funcOp.getArgument(2);
+            if(!isMatchedFillOps(fillOps, bufferC))
             {
                 return false;
             }
@@ -1937,7 +1937,7 @@ namespace
             rewriter.eraseOp(fillLaunch);
 
             //return
-            return;
+            return true;
         }
 
         LogicalResult addAccumulator(scf::ForOp loop, PatternRewriter &rewriter) const
@@ -1973,11 +1973,15 @@ namespace
             if(fillLaunch)
             {
                 /** Optimization 1: removing zero filling */
-                removeZeroFillLaunch(fillLaunch, rewriter);
+                if(!removeZeroFillLaunch(fillLaunch, rewriter))
+                {
+                    flag = failure();
+                    return flag;
+                }
 
                 /** Optimizaiton 2: adding built-in accumulator */
                 flag = addAccumulator(loop, rewriter);
-
+                
             }
 
             //return
