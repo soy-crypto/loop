@@ -1860,32 +1860,25 @@ namespace
 
         bool isMatchedFillOps(struct Fillops FillOps)
         {
+            //check
             if(!launch)
             {
                 return false;
             }
+
+            //init
+            bool flag;
+
+            //compute
+            /** head matched */
+            bool1 flag1;
             
-            bool flag1 = isLaunchHeadMatched(launch.getGridSizeOperands(), launch.getBlockSizeOperands());
-            bool flag2 = isApplyOpsMatched();
-            bool flag3 = isAddOpsMatched(launch);
-            bool flag4 = isStoreOpMatched(launch);
+
+            
 
             return flag1 && flag2 && flag3 && flag4;
         }
 
-        bool isLaunchHeadMatched(gpu::LaunchOp launch)
-        {
-            if(!launch)
-            {
-                return false;
-            }
-
-            auto grid = launch.getGridSizeOperandValues(); 
-            auto block = launch.getBlockSizeOperandValues();
-            bool flag = isConstantIntValue(grid.x, 8) && isConstantIntValue(grid.y, 8) && isConstantIntValue(grid.z, 1) && isConstantIntValue(block.x, 8) && isConstantIntValue(block.y, 8) && isConstantIntValue(block.z, 1);
-
-            return flag;
-        }
 
         
 
