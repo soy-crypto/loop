@@ -1839,7 +1839,7 @@ namespace
             }
 
             //update
-            if(!fillOps.launch || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOps)
+            if(!fillOps.launchOp || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOp || !fillOps.storeOp)
             {
                 fillOps = {};
             }
@@ -1849,7 +1849,7 @@ namespace
 
         }//
 
-        bool isMatchedFillOps(struct Fillops fillOps, Value C) const
+        bool isMatchedFillOps(struct FillOps fillOps, Value C) const
         {
             //check
             if(!fillOps.launchOp || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOp || !fillOps.storeOp)
@@ -1857,7 +1857,7 @@ namespace
                 return false;
             }
 
-            if(fillOps.rowBaseOp.getNumOperands() != 1 || fillOps.colBaseOp.getNumOperands() != 1 || fillOps.rowOp.getNumOperands() != 2 || fillOps.colOp.getNumOperands() != 2 || fillops.storeOp.getIndices().size() != 2 )
+            if(fillOps.rowBaseOp.getNumOperands() != 1 || fillOps.colBaseOp.getNumOperands() != 1 || fillOps.rowOp.getNumOperands() != 2 || fillOps.colOp.getNumOperands() != 2 || fillOps.storeOp.getIndices().size() != 2 )
             {
                 return false;
             }
@@ -1869,7 +1869,7 @@ namespace
             auto blockSize = fillOps.launchOp.getBlockSizeOperandValues();
             auto blockId = fillOps.launchOp.getBlockIds();
             auto threadId= fillOps.launchOp.getThreadIds();
-            auto rowBaseFormula = fillOps.rowBaseOps.getAffineMap(), colBaseFormula = fillOps.colBaseOp.getAffineMap();
+            auto rowBaseFormula = fillOps.rowBaseOp.getAffineMap(), colBaseFormula = fillOps.colBaseOp.getAffineMap();
             Value rowBase = fillOps.rowBaseOp.getResult();
             Value colBase = fillOps.colBaseOp.getResult();
             auto rowBaseOpLhs = fillOps.rowBaseOp.getOperand(0);
