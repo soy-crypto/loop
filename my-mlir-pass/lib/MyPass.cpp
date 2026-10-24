@@ -1883,7 +1883,7 @@ namespace
             //compute
             /** launch input */
             bool flag1 = false;
-            if(isConstantInt(gridSize.x, 8) && isConstantInt(gridSize.y, 8) && isConstantInt(gridSize.z, 1) && isConstantInt(blockSize.x, 8) && isConstantInt(blockSize.y, 8) && isConstantInt(blockSize.z, 1))
+            if(isConstantIntValue(gridSize.x, 8) && isConstantIntValue(gridSize.y, 8) && isConstantIntValue(gridSize.z, 1) && isConstantIntValue(blockSize.x, 8) && isConstantIntValue(blockSize.y, 8) && isConstantIntValue(blockSize.z, 1))
             {
                 flag1 = true;
             }
@@ -2035,7 +2035,7 @@ void registerMyPass()
     PassRegistration<ToyPromoteAccumulatorPass>();
 }
 
-
+/*
 bool hasZeroFilling(scf::ForOp loop) const
 {
     // 1. Check the original GEMM loop.
@@ -2132,3 +2132,4 @@ bool hasZeroFilling(scf::ForOp loop) const
            cLoad.getIndices()[0] == row.getResult() &&
            cLoad.getIndices()[1] == col.getResult();
 }
+           */
