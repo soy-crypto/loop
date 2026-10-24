@@ -1810,7 +1810,7 @@ namespace
             memref::StoreOp storeOp;
         };
 
-        struct FillOps hasFillLaunch(scf::ForOp loop)
+        struct FillOps getFillOps(scf::ForOp loop)
         {
             //check
             if(!loop)
@@ -1858,7 +1858,7 @@ namespace
 
         }//
 
-        bool isMatchedFillOps(struct Fillops FillOps)
+        bool isMatchedFillOps(struct Fillops fillOps, Value C)
         {
             //check
             if(!launch)
@@ -1868,19 +1868,50 @@ namespace
 
             //init
             bool flag;
+            auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, loop.getContext()) * 8);
+            auto block = fillOps.launchOp.getGridSizeOperandValues();
+            auto thread = fillOps.launchOp.getBlockSizeOperandValues();
+            auto rowBaseFormula = fillOps.rowBaseOps.getAffineMap(), colBaseFormula = fillOps.colBaseOp.getAffineMap();
+            Value rowBase = fillOps.rowBaseOp.getResult(), colBase = fillOps.colBaseOp.getResult();
+            Value row = fillOps.getResult(), col = fillOps.getResult();
+            auto rowBaseOpLhs = fillOps.rowBaseOp.getOperands()[0], rowBaseOpRhs = fillOps.colBaseOp.getOperands()[1];
+            auto colBaseOpLhs = fillOps.colBaseOp.getOperands()[0], colBaseOpRhs = fillOps.colBaseOp.getOperands()[1];
+            auto rowOpLhs = fillOps.rowOp.getOperands()[0], colOpRhs = fillOps.colOp.getOperands()[1];
+            auto storeOpLhs = fillOps.storeOp.getValue(), storeOpBuff = storeOp.getMemref(), buffI = storeOp.getIndices()[0], buffJ = storeOp.getIndices()[1];
 
             //compute
-            /** head matched */
-            bool1 flag1;
-            
+            /** launch input */
+            bool flag1 = false;
+            if(isConstantInt(block.x, 8) && isConstantInt(block.y, 8) && isConstantInt(block.z, 1) && isConstantInt(thread.x, 8) && isConstantInt(thread.y, 8) && isConstantInt(thread.z, 1))
+            {
+                flag1 = true;
+            }
 
-            
+            /** affine ops */
+            bool flag2 = false;
+            if(rowBaseFormula == expectedFormula && colBaseFormula == expectedFormula && rowBaseOpLhs == block.x && colBaseOpLhs == block.y)
+            {
+                flag2 = true;
+            }
 
+            /** add ops */
+            bool flag3 = false;
+            if(rowOpLhs == thread.x && rowOpRhs == rowBaseOpLhs && colOpLhs == thread.y && colOpRhs == colBaweOpRhs)
+            {
+                flag3 = true;    
+            }
+
+            /** store op */
+            bool flag4 = false;
+            if(storeOpLhs == C && storeOpBuff == C && buffI == row && buffJ == col)
+            {
+                flag4 = true;
+            }
+
+            //return
             return flag1 && flag2 && flag3 && flag4;
         }
 
-
-        
 
         void removeZeroFillLaunch(scf::ForOp loop, PatternRewriter &rewriter) const
         {
