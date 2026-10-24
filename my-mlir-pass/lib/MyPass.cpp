@@ -1802,9 +1802,9 @@ namespace
 
         struct FillOps
         {
-            gpu::LunchOp lunchOp;
+            gpu::LaunchOp launchOp;
             affine::AffineApplyOp rowBaseOp;
-            affine::AffineAPplyOp colBaseOp;
+            affine::AffineApplyOp colBaseOp;
             arith::AddIOp rowOp;
             arith::AddIOp colOp;
             memref::StoreOp storeOp;
@@ -1981,7 +1981,7 @@ namespace
 
                 /** Optimizaiton 2: adding built-in accumulator */
                 flag = addAccumulator(loop, rewriter);
-                
+
             }
 
             //return
