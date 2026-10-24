@@ -1800,44 +1800,99 @@ namespace
             return;
         }
 
-        gpu::LaunchOp findMatchedLaunch(scf::ForOp loop) const
+        struct FillOps
         {
-            //find 
-            auto launch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
+            gpu::LunchOp lunchOp;
+            affine::AffineApplyOp rowBaseOp;
+            affine::AffineAPplyOp colBaseOp;
+            arith::AddIOp rowOp;
+            arith::AddIOp colOp;
+            memref::StoreOp storeOp;
+        };
+
+        struct FillOps hasFillLaunch(scf::ForOp loop)
+        {
+            //check
+            if(!loop)
+            {
+                return {};
+            }
+
+            //init
+            struct FillOps fillOps{};
+
+            //get
+            auto curLaunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
+            if(curLaunch)
+            {
+                auto fillLaunch = dyn_cast<gpu::LaunchOp>(curLaunch->getPrevNode());
+                if(fillLaunch)
+                {
+                    SmallVector<Operation*> ops;
+                    for(Operation& op : fillLaunch.getBody().front().without_terminator())
+                    {
+                        ops.push_back(&op);
+                    }
+
+                    if(ops.size() == 5)
+                    {
+                        fillOps.launchOp = fillLaunch;
+                        fillOps.rowBaseOp = dyn_cast<affine::AffineApplyOp>(&ops[0]);
+                        fillOps.colBaseOp = dyn_cast<affine::AffineApplyOp>(&ops[1]);
+                        fillOps.rowOp = dyn_cast<arith::AddIOp>(&ops[2]);
+                        fillOps.colOp = dyn_cast<arith::AddIOp>(&ops[3]);
+                    }
+
+                }//
+
+            }//
+
+            //update
+            if(!fillOps.launch || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOps)
+            {
+                fillOps = {};
+            }
+
+            //return
+            return fillOps;
+
+        }//
+
+        bool isMatchedFillOps(struct Fillops FillOps)
+        {
             if(!launch)
             {
-                return {};
-            }
-
-            auto curNode = launch.getOperation()->getPrevNode();
-            while(true)
-            {
-                if(curNode == nullptr || isa<gpu::LaunchOp>(curNode))
-                {
-                    break;
-                }
-
-                curNode = curNode->getPrevNode();
-            }
-
-            if(curNode == nullptr)
-            {
-                return {};
+                return false;
             }
             
-            //return
-            return dyn_cast<gpu::LaunchOp>(curNode);
+            bool flag1 = isLaunchHeadMatched(launch.getGridSizeOperands(), launch.getBlockSizeOperands());
+            bool flag2 = isApplyOpsMatched();
+            bool flag3 = isAddOpsMatched(launch);
+            bool flag4 = isStoreOpMatched(launch);
+
+            return flag1 && flag2 && flag3 && flag4;
         }
-        
-        bool hasZeroFilling(scf::ForOp loop)
+
+        bool isLaunchHeadMatched(gpu::LaunchOp launch)
         {
-            
+            if(!launch)
+            {
+                return false;
+            }
+
+            auto grid = launch.getGridSizeOperandValues(); 
+            auto block = launch.getBlockSizeOperandValues();
+            bool flag = isConstantIntValue(grid.x, 8) && isConstantIntValue(grid.y, 8) && isConstantIntValue(grid.z, 1) && isConstantIntValue(block.x, 8) && isConstantIntValue(block.y, 8) && isConstantIntValue(block.z, 1);
+
+            return flag;
         }
 
-        void removeZerosFilling(scf::ForOp loop, PatternRewriter &rewriter) const
+        
+
+        void removeZeroFillLaunch(scf::ForOp loop, PatternRewriter &rewriter) const
         {
             //locate
-            auto lunchFunc = findMatchedLaunch(loop);
+            auto lunchFunc = findMatchedZeroFillingLaunch(loop);
             if(lunchFunc == nullptr)
             {
                 return;
@@ -1848,6 +1903,30 @@ namespace
 
             //return
             return;
+        }
+
+        gpu::LaunchOp hasGEMMLaunch(scf::ForOp loop)
+        {
+            //check validity
+            if(loop == nullptr)
+            {
+                return false;
+            }
+
+            //body
+            auto curLaunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>;
+
+            //return
+            return dyn_cast<gpu::LaunchOp>(curLaunch);
+        }
+
+        bool isMatchedGEMMLaunch(gpu::LunchOp zfLaunch)
+        {
+            if(!zfLaunch)
+            {
+                return false;
+            }
+
         }
 
         LogicalResult addAccumulator(scf::ForOp loop, PatternRewriter &rewriter) const
