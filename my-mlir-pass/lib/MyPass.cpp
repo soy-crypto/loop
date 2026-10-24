@@ -1813,7 +1813,7 @@ namespace
         struct FillOps getFillOps(gpu::LaunchOp fillLaunch) const
         {
             //check
-            if(!fillLaunch)
+            if (!fillLaunch)
             {
                 return {};
             }
@@ -1852,7 +1852,7 @@ namespace
         bool isMatchedFillOps(struct Fillops fillOps, Value C) const
         {
             //check
-            if(!fillOps || !fillOps.launchOp || !fillOps.rowBaseOp || !fillOp.colBaseOp || !fillOp.rowOp || !fillOp.colOp || !fillOps.storeOp)
+            if(!fillOps.launchOp || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOp || !fillOps.storeOp)
             {
                 return false;
             }
@@ -1865,7 +1865,7 @@ namespace
             //init
             bool flag;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, fillOps.launchOp.getContext()) * 8);
-            auto gridSize = fillps.launchOp.getGridSizeOperandValues();
+            auto gridSize = fillOps.launchOp.getGridSizeOperandValues();
             auto blockSize = fillOps.launchOp.getBlockSizeOperandValues();
             auto blockId = fillOps.launchOp.getBlockIds();
             auto threadId= fillOps.launchOp.getThreadIds();
@@ -1878,7 +1878,7 @@ namespace
             Value col = fillOps.colOp.getResult();
             auto rowOpLhs = fillOps.rowOp.getOperand(0), rowOpRhs = fillOps.rowOp.getOperand(1); 
             auto colOpLhs = fillOps.colOp.getOperand(0), colOpRhs = fillOps.colOp.getOperand(1);
-            auto storeOpLhs = fillOps.storeOp.getValue(), storeOpBuff = storeOp.getMemref(), buffI = storeOp.getIndices()[0], buffJ = storeOp.getIndices()[1];
+            Value storeOpLhs = fillOps.storeOp.getValue(), storeOpBuff = fillOps.storeOp.getMemref(), buffI = fillOps.storeOp.getIndices()[0], buffJ = fillOps.storeOp.getIndices()[1];
 
             //compute
             /** launch input */
