@@ -1810,10 +1810,10 @@ namespace
             memref::StoreOp storeOp;
         };
 
-        struct FillOps getFillOps(scf::ForOp loop)
+        struct FillOps getFillOps(gpu::LaunchOp fillLaunch) const
         {
             //check
-            if(!loop)
+            if(!fillLaunch)
             {
                 return {};
             }
@@ -1822,30 +1822,21 @@ namespace
             struct FillOps fillOps{};
 
             //get
-            auto curLaunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
-            if(curLaunch)
+            SmallVector<Operation*> ops;
+            for(Operation& op : fillLaunch.getBody().front().without_terminator())
             {
-                auto fillLaunch = dyn_cast<gpu::LaunchOp>(curLaunch->getPrevNode());
-                if(fillLaunch)
-                {
-                    SmallVector<Operation*> ops;
-                    for(Operation& op : fillLaunch.getBody().front().without_terminator())
-                    {
-                        ops.push_back(&op);
-                    }
+                ops.push_back(&op);
+            }
 
-                    if(ops.size() == 5)
-                    {
-                        fillOps.launchOp = fillLaunch;
-                        fillOps.rowBaseOp = dyn_cast<affine::AffineApplyOp>(&ops[0]);
-                        fillOps.colBaseOp = dyn_cast<affine::AffineApplyOp>(&ops[1]);
-                        fillOps.rowOp = dyn_cast<arith::AddIOp>(&ops[2]);
-                        fillOps.colOp = dyn_cast<arith::AddIOp>(&ops[3]);
-                    }
-
-                }//
-
-            }//
+            if(ops.size() == 5)
+            {
+                fillOps.launchOp = fillLaunch;
+                fillOps.rowBaseOp = dyn_cast<affine::AffineApplyOp>(ops[0]);
+                fillOps.colBaseOp = dyn_cast<affine::AffineApplyOp>(ops[1]);
+                fillOps.rowOp = dyn_cast<arith::AddIOp>(ops[2]);
+                fillOps.colOp = dyn_cast<arith::AddIOp>(ops[3]);
+                fillOps.storeOp = dyn_cast<memref::StoreOp>(ops[4]);
+            }
 
             //update
             if(!fillOps.launch || !fillOps.rowBaseOp || !fillOps.colBaseOp || !fillOps.rowOp || !fillOps.colOps)
@@ -1858,99 +1849,95 @@ namespace
 
         }//
 
-        bool isMatchedFillOps(struct Fillops fillOps, Value C)
+        bool isMatchedFillOps(struct Fillops fillOps, Value C) const
         {
             //check
-            if(!launch)
+            if(!fillOps || !fillOps.launchOp || !fillOps.rowBaseOp || !fillOp.colBaseOp || !fillOp.rowOp || !fillOp.colOp || !fillOps.storeOp)
+            {
+                return false;
+            }
+
+            if(fillOps.rowBaseOp.getNumOperands() != 1 || fillOps.colBaseOp.getNumOperands() != 1 || fillOps.rowOp.getNumOperands() != 2 || fillOps.colOp.getNumOperands() != 2 || fillops.storeOp.getIndices().size() != 2 )
             {
                 return false;
             }
 
             //init
             bool flag;
-            auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, loop.getContext()) * 8);
-            auto block = fillOps.launchOp.getGridSizeOperandValues();
-            auto thread = fillOps.launchOp.getBlockSizeOperandValues();
+            auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, fillOps.launchOp.getContext()) * 8);
+            auto gridSize = fillps.launchOp.getGridSizeOperandValues();
+            auto blockSize = fillOps.launchOp.getBlockSizeOperandValues();
+            auto blockId = fillOps.launchOp.getBlockIds();
+            auto threadId= fillOps.launchOp.getThreadIds();
             auto rowBaseFormula = fillOps.rowBaseOps.getAffineMap(), colBaseFormula = fillOps.colBaseOp.getAffineMap();
-            Value rowBase = fillOps.rowBaseOp.getResult(), colBase = fillOps.colBaseOp.getResult();
-            Value row = fillOps.getResult(), col = fillOps.getResult();
-            auto rowBaseOpLhs = fillOps.rowBaseOp.getOperands()[0], rowBaseOpRhs = fillOps.colBaseOp.getOperands()[1];
-            auto colBaseOpLhs = fillOps.colBaseOp.getOperands()[0], colBaseOpRhs = fillOps.colBaseOp.getOperands()[1];
-            auto rowOpLhs = fillOps.rowOp.getOperands()[0], colOpRhs = fillOps.colOp.getOperands()[1];
+            Value rowBase = fillOps.rowBaseOp.getResult();
+            Value colBase = fillOps.colBaseOp.getResult();
+            auto rowBaseOpLhs = fillOps.rowBaseOp.getOperand(0);
+            auto colBaseOpLhs = fillOps.colBaseOp.getOperand(0);
+            Value row = fillOps.rowOp.getResult();
+            Value col = fillOps.colOp.getResult();
+            auto rowOpLhs = fillOps.rowOp.getOperand(0), rowOpRhs = fillOps.rowOp.getOperand(1); 
+            auto colOpLhs = fillOps.colOp.getOperand(0), colOpRhs = fillOps.colOp.getOperand(1);
             auto storeOpLhs = fillOps.storeOp.getValue(), storeOpBuff = storeOp.getMemref(), buffI = storeOp.getIndices()[0], buffJ = storeOp.getIndices()[1];
 
             //compute
             /** launch input */
             bool flag1 = false;
-            if(isConstantInt(block.x, 8) && isConstantInt(block.y, 8) && isConstantInt(block.z, 1) && isConstantInt(thread.x, 8) && isConstantInt(thread.y, 8) && isConstantInt(thread.z, 1))
+            if(isConstantInt(gridSize.x, 8) && isConstantInt(gridSize.y, 8) && isConstantInt(gridSize.z, 1) && isConstantInt(blockSize.x, 8) && isConstantInt(blockSize.y, 8) && isConstantInt(blockSize.z, 1))
             {
                 flag1 = true;
             }
 
             /** affine ops */
             bool flag2 = false;
-            if(rowBaseFormula == expectedFormula && colBaseFormula == expectedFormula && rowBaseOpLhs == block.x && colBaseOpLhs == block.y)
+            if(rowBaseFormula == expectedFormula && colBaseFormula == expectedFormula && rowBaseOpLhs == blockId.x && colBaseOpLhs == blockId.y)
             {
                 flag2 = true;
             }
 
             /** add ops */
             bool flag3 = false;
-            if(rowOpLhs == thread.x && rowOpRhs == rowBaseOpLhs && colOpLhs == thread.y && colOpRhs == colBaweOpRhs)
+            if(rowOpLhs == threadId.x && rowOpRhs == rowBase && colOpLhs == threadId.y && colOpRhs == colBase)
             {
                 flag3 = true;    
             }
 
             /** store op */
             bool flag4 = false;
-            if(storeOpLhs == C && storeOpBuff == C && buffI == row && buffJ == col)
+            if(matchPattern(storeOpLhs, m_AnyZeroFloat()) && storeOpBuff == C && buffI == row && buffJ == col )
             {
                 flag4 = true;
             }
 
+            //update flag
+            flag = flag1 && flag2 && flag3 && flag4;
+
             //return
-            return flag1 && flag2 && flag3 && flag4;
+            return flag;
         }
 
-
-        void removeZeroFillLaunch(scf::ForOp loop, PatternRewriter &rewriter) const
+        bool removeZeroFillLaunch(gpu::LaunchOp fillLaunch, PatternRewriter &rewriter) const
         {
-            //locate
-            auto lunchFunc = findMatchedZeroFillingLaunch(loop);
-            if(lunchFunc == nullptr)
+            //get fill ops
+            struct FillOps fillOps = getFillOps(fillLaunch);
+            if(!fillOps.launchOp && !fillOps.rowBaseOp && !fillOps.colBaseOp && !fillOps.rowOp && !fillOps.colOp && !fillOps.storeOp)
             {
-                return;
+                return false;
+            }
+
+            //check
+            func = loop.getOperation()->getParentOfType<func::FuncOp>(fillLaunch);
+            Value bufferC = func.getArgument(2);
+            if(!isMatchedFillOps(fillOps, bfuferC))
+            {
+                return false;
             }
 
             //rewrite
-            rewriter.eraseOp(lunchFunc);
+            rewriter.eraseOp(fillLaunch);
 
             //return
             return;
-        }
-
-        gpu::LaunchOp hasGEMMLaunch(scf::ForOp loop)
-        {
-            //check validity
-            if(loop == nullptr)
-            {
-                return false;
-            }
-
-            //body
-            auto curLaunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>;
-
-            //return
-            return dyn_cast<gpu::LaunchOp>(curLaunch);
-        }
-
-        bool isMatchedGEMMLaunch(gpu::LunchOp zfLaunch)
-        {
-            if(!zfLaunch)
-            {
-                return false;
-            }
-
         }
 
         LogicalResult addAccumulator(scf::ForOp loop, PatternRewriter &rewriter) const
@@ -1968,7 +1955,7 @@ namespace
             //return
             return success();
         }
-
+         
         LogicalResult matchAndRewrite(scf::ForOp loop, PatternRewriter &rewriter) const override
         {
             //check validity
@@ -1977,11 +1964,16 @@ namespace
                 return failure();
             }
 
+            //init
             LogicalResult flag = failure();
-            if(hasZeroFilling(loop))
+            gpu::LaunchOp curLaunch = loop.getOperation()->getParentOfType<gpu::LaunchOp>();
+            gpu::LaunchOp fillLaunch = curLaunch ? dyn_cast_or_null<gpu::LaunchOp>(curLaunch->getPrevNode()) : gpu::LaunchOp{};
+
+            //check
+            if(fillLaunch)
             {
                 /** Optimization 1: removing zero filling */
-                removeZerosFilling(loop, rewriter);
+                removeZeroFillLaunch(fillLaunch, rewriter);
 
                 /** Optimizaiton 2: adding built-in accumulator */
                 flag = addAccumulator(loop, rewriter);
