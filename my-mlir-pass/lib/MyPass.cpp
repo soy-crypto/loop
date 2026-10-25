@@ -34,6 +34,7 @@
 
 using namespace mlir;
 
+//name space 
 namespace
 {
     //pass - Print
@@ -2015,10 +2016,53 @@ namespace
         {
             RewritePatternSet patterns(&getContext());
             patterns.add<PaPattern>(&getContext());
+            FrozenRewritePatternSet frozen(std::move(patterns));
+            walkAndApplyPatterns(getOperation(), frozen);
+            /*
             if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
             {
                 signalPassFailure();
             }
+            */
+
+        }//void
+
+    }; // struct
+
+}//namespace
+
+
+namespace toy_shared_tile
+{
+    struct SharedTiledPattern : OpRewritePattern<gpu::LaunchOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+        LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
+        {
+            return failure();
+        }//
+
+    };//
+
+    struct ToySharedTilePass : PassWrapper<ToySharedTilePass, OperationPass<ModuleOp>>
+    {
+        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToySharedTilePass);
+        StringRef getArgument() const override
+        {
+            return "toy-shared-tile";
+        }
+
+        StringRef getDescription() const override
+        {
+            return "Tile the fixed thread-swapped GEMM with 8x8 shared-memory tiles";
+        }
+
+        void runOnOperation() override
+        {
+            RewritePatternSet patterns(&getContext());
+            patterns.add<SharedTiledPattern>(&getContext());
+            FrozenRewritePatternSet frozen(std::move(patterns));
+            walkAndApplyPatterns(getOperation(), frozen);
 
         }//void
 
@@ -2041,4 +2085,5 @@ void registerMyPass()
     PassRegistration<FusionPass>();
     PassRegistration<TilingPass>();
     PassRegistration<ToyPromoteAccumulatorPass>();
+    PassRegistration<ToySharedTilePass>();
 }
