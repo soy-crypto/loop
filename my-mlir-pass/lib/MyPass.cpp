@@ -2014,16 +2014,13 @@ namespace
 
         void runOnOperation() override
         {
+            //init
             RewritePatternSet patterns(&getContext());
             patterns.add<PaPattern>(&getContext());
             FrozenRewritePatternSet frozen(std::move(patterns));
-            walkAndApplyPatterns(getOperation(), frozen);
-            /*
-            if(failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
-            {
-                signalPassFailure();
-            }
-            */
+
+            //apply patterns
+            applyPatternsGreedily(getOperation(), std::move(patterns));
 
         }//void
 
