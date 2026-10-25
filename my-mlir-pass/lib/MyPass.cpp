@@ -2033,7 +2033,33 @@ namespace
 
 
 namespace toy_shared_tile
-{
+{   
+    //pattern
+    struct SharedTiledPattern : OpRewritePattern<gpu::LaunchOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+        struct GEMMOps
+        {
+            gpu::LaunchOp lunchOp;
+            
+            affine::AffineApplyOp rowBaseOp;
+            affine::AffineApplyOp colBaseOp;
+            arith::AddIOp rowOp;
+            arith::AddIOp colOp;
+
+            scf::ForOp loopOp;
+            
+            
+            
+        }
+        LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
+        {
+            return failure();
+        }//
+
+    };//
+
+    //pass
     struct ToySharedTilePass : PassWrapper<ToySharedTilePass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToySharedTilePass);
@@ -2056,23 +2082,10 @@ namespace toy_shared_tile
 
             //apply
             walkAndApplyPatterns(getOperation(), frozen);
-            walk
 
         }//void
 
     }; // struct
-
-    struct SharedTiledPattern : OpRewritePattern<gpu::LaunchOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-        LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
-        {
-            return failure();
-        }//
-
-
-        
-    };//
 
 }//namespace
 
