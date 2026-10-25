@@ -1977,7 +1977,7 @@ namespace
                 return failure();
             }
             
-            //
+            //do optimiztion
             if(fillLaunch)
             {
                 /** Optimization 1: removing zero filling */
