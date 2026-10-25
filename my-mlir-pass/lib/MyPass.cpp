@@ -2011,7 +2011,7 @@ namespace
         {
             return "pa pass";
         }
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
         void runOnOperation() override
         {
             //init
@@ -2034,16 +2034,6 @@ namespace
 
 namespace toy_shared_tile
 {
-    struct SharedTiledPattern : OpRewritePattern<gpu::LaunchOp>
-    {
-        using OpRewritePattern::OpRewritePattern;
-        LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
-        {
-            return failure();
-        }//
-
-    };//
-
     struct ToySharedTilePass : PassWrapper<ToySharedTilePass, OperationPass<ModuleOp>>
     {
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToySharedTilePass);
@@ -2070,6 +2060,17 @@ namespace toy_shared_tile
         }//void
 
     }; // struct
+
+    struct SharedTiledPattern : OpRewritePattern<gpu::LaunchOp>
+    {
+        using OpRewritePattern::OpRewritePattern;
+        LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
+        {
+            return failure();
+        }//
+
+        
+    };//
 
 }//namespace
 
