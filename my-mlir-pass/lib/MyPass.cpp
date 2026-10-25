@@ -2056,6 +2056,7 @@ namespace toy_shared_tile
 
             //apply
             walkAndApplyPatterns(getOperation(), frozen);
+            walk
 
         }//void
 
@@ -2068,6 +2069,7 @@ namespace toy_shared_tile
         {
             return failure();
         }//
+
 
         
     };//
