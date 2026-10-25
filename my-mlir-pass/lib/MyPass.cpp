@@ -2020,7 +2020,10 @@ namespace
             FrozenRewritePatternSet frozen(std::move(patterns));
 
             //apply patterns
-            applyPatternsGreedily(getOperation(), std::move(patterns));
+            if(failed(applyPatternsGreedily(getOperation(), frozen)))
+            {
+                signalPassFailure();
+            }
 
         }//void
 
