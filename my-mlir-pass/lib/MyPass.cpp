@@ -1970,6 +1970,14 @@ namespace
             gpu::LaunchOp fillLaunch = curLaunch ? dyn_cast_or_null<gpu::LaunchOp>(curLaunch->getPrevNode()) : gpu::LaunchOp{};
 
             //check
+            //check gemm validation
+            auto targetGEMMOps = findMatchedOps(loop);
+            if(!targetGEMMOps)
+            {
+                return failure();
+            }
+            
+            //
             if(fillLaunch)
             {
                 /** Optimization 1: removing zero filling */
