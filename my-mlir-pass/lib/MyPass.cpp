@@ -2048,12 +2048,23 @@ namespace toy_shared_tile
             arith::AddIOp colOp;
 
             scf::ForOp loopOp;
-            
-            
-            
-        }
+            memref::LoadOp loadOpA;
+            memref::LoadOp loadOpB;
+            arith::MulFOp mulOp;
+            arith::AddFOp addOp;
+
+            memref::StoreOp storeOp;
+        };
+
         LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
         {
+            //check validity
+            if(!launch)
+            {
+                return failure();
+            }
+
+            //
             return failure();
         }//
 

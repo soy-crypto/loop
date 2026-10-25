@@ -1,12 +1,4 @@
 
-
-
-
-
-
-
-
-
 #map = affine_map<()[s0] -> (s0 * 8)>
 module {
   func.func @gemm(%arg0: memref<64x64xf32>, %arg1: memref<64x64xf32>, %arg2: memref<64x64xf32>) attributes {llvm.emit_c_interface, toy.accumulator_safe} {
@@ -33,4 +25,3 @@ module {
     return
   }
 }
-
