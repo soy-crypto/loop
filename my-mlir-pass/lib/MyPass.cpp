@@ -2059,9 +2059,12 @@ namespace toy_shared_tile
 
         void runOnOperation() override
         {
+            //init
             RewritePatternSet patterns(&getContext());
             patterns.add<SharedTiledPattern>(&getContext());
             FrozenRewritePatternSet frozen(std::move(patterns));
+
+            //apply
             walkAndApplyPatterns(getOperation(), frozen);
 
         }//void
