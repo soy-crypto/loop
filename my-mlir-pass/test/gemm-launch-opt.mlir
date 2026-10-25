@@ -1,6 +1,4 @@
 #map = affine_map<()[s0] -> (s0 * 8)>
-
-
 module 
 {
     func.func @gemm(%A : memref<64x64xf32>, %B : memref<64x64xf32>, %C : memref<64x64xf32>) attributes {llvm.emit_c_interface}
