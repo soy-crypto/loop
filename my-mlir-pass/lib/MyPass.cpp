@@ -3,6 +3,7 @@
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Tools/Plugins/PassPlugin.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+#include "mlir/Transforms/WalkPatternRewriteDriver.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
@@ -25,11 +26,11 @@
 #include <sstream>
 #include <utility>
 
-
 /*custom head file */
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/IRMapping.h"
 #include "llvm/ADT/STLExtras.h"
+#include "mlir/Transforms/WalkPatternRewriteDriver.h"
 
 
 using namespace mlir;
@@ -2040,7 +2041,7 @@ namespace toy_shared_tile
         using OpRewritePattern::OpRewritePattern;
         struct GEMMOps
         {
-            gpu::LaunchOp lunchOp;
+            gpu::LaunchOp launchOp;
             
             affine::AffineApplyOp rowBaseOp;
             affine::AffineApplyOp colBaseOp;
@@ -2056,6 +2057,45 @@ namespace toy_shared_tile
             memref::StoreOp storeOp;
         };
 
+        struct GEMMOps collectGEMMOps(gpu::LaunchOp launch) const
+        {
+            //check validdy
+            if(!launch)
+            {
+                return GEMMOps{};
+            }
+            
+            //init
+            struct GEMMOps gemmOps;
+
+            //get gemm ops
+            gemmOps.launchOp = launch;
+            SmallVector<Operation*> ops;
+            for(Operation& op : launch.getBody().front().without_terminator())
+            {
+                ops.push_back(&op);
+            }
+
+            if(ops.size() != 6)
+            {
+                return GEMMOps{};
+            }
+
+
+            //return
+            return gemmOps;        
+        }
+
+        bool isMatchedGEMMOps(struct GEMMOps gemmOps) const
+        {
+            return true;
+        }
+
+        void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
+        {
+            return;
+        }
+
         LogicalResult matchAndRewrite(gpu::LaunchOp launch, PatternRewriter &rewriter) const override
         {
             //check validity
@@ -2064,8 +2104,24 @@ namespace toy_shared_tile
                 return failure();
             }
 
-            //
-            return failure();
+            //collect gemmOps
+            struct GEMMOps gemmOps = collectGEMMOps(launch);
+            if(!gemmOps.launchOp)
+            {
+                return failure();
+            }
+
+            //validate gemmOps
+            if(!isMatchedGEMMOps(gemmOps))
+            {
+                return failure();
+            }
+
+            //tiling the gemm
+            rewriteGEMM(gemmOps, rewriter);
+            
+            //return
+            return success();
         }//
 
     };//
@@ -2115,5 +2171,5 @@ void registerMyPass()
     PassRegistration<FusionPass>();
     PassRegistration<TilingPass>();
     PassRegistration<ToyPromoteAccumulatorPass>();
-    PassRegistration<ToySharedTilePass>();
+    PassRegistration<toy_shared_tile::ToySharedTilePass>();
 }

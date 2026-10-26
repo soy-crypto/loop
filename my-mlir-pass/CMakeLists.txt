@@ -55,6 +55,10 @@ target_link_libraries(my-opt PRIVATE
   MLIRNVVMTarget
   MLIRLLVMToLLVMIRTranslation 
   MLIRNVVMToLLVMIRTranslation
-  LLVM
+  MLIRRegisterAllDialects
+  MLIRRegisterAllExtensions
+  MLIRRegisterAllPasses
   MLIRGPUToLLVMIRTranslation
 )
+
+target_compile_options(my-opt PRIVATE -fno-rtti)

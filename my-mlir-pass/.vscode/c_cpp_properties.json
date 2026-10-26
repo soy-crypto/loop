@@ -1,0 +1,19 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "compilerPath": "/usr/bin/g++",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-gcc-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "includePath": [
+        "${workspaceFolder}/include",
+        "/root/llvm-project/llvm/include",
+        "/root/llvm-project/build/include",
+        "/root/llvm-project/mlir/include",
+        "/root/llvm-project/build/tools/mlir/include"
+      ]
+    }
+  ],
+  "version": 4
+}
