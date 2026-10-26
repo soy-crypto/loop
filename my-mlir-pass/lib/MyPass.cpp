@@ -2081,7 +2081,6 @@ namespace toy_shared_tile
                 return GEMMOps{};
             }
 
-
             //return
             return gemmOps;        
         }
