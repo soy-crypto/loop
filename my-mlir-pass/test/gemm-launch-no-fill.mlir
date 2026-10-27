@@ -10,8 +10,8 @@ module {
     gpu.launch blocks(%arg3, %arg4, %arg5) in (%arg9 = %c8, %arg10 = %c8, %arg11 = %c1) threads(%arg6, %arg7, %arg8) in (%arg12 = %c8, %arg13 = %c8, %arg14 = %c1) {
       %0 = affine.apply #map()[%arg3]
       %1 = affine.apply #map()[%arg4]
-      %2 = arith.addi %arg6, %0 : index
-      %3 = arith.addi %arg7, %1 : index
+      %2 = arith.addi %arg7, %0 : index
+      %3 = arith.addi %arg6, %1 : index
       %4 = scf.for %arg15 = %c0 to %c64 step %c1 iter_args(%arg16 = %cst) -> (f32) {
         %5 = memref.load %arg0[%2, %arg15] : memref<64x64xf32>
         %6 = memref.load %arg1[%arg15, %3] : memref<64x64xf32>

@@ -2128,25 +2128,25 @@ namespace toy_shared_tile
             //init
             bool flag = true;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
-            auto blocksId = gemmOps.launchOp.getBlockIds();
-            auto threadsId = gemmOps.launchOp.getThreadIds();
-            auto gridSize = gemmOps.launchOp.getGridSizeOperandValues();
-            auto blockSize = gemmOps.launchOp.getBlockSizeOperandValues();
+            auto blocksId        = gemmOps.launchOp.getBlockIds();
+            auto threadsId       = gemmOps.launchOp.getThreadIds();
+            auto gridSize        = gemmOps.launchOp.getGridSizeOperandValues();
+            auto blockSize       = gemmOps.launchOp.getBlockSizeOperandValues();
 
-            auto launchOp = gemmOps.launchOp;
+            auto launchOp  = gemmOps.launchOp;
             auto rowBaseOp = gemmOps.rowBaseOp;
             auto colBaseOp = gemmOps.colBaseOp;
-            auto rowOp = gemmOps.rowOp;     
-            auto colOp = gemmOps.colOp;     
-            auto loopOp = gemmOps.loopOp;    
-            auto loadAOp = gemmOps.loadAOp;   
-            auto loadBOp = gemmOps.loadBOp;  
-            auto mulOp = gemmOps.mulOp;     
-            auto addOp = gemmOps.addOp;     
-            auto storeOp = gemmOps.storeOp;   
+            auto rowOp     = gemmOps.rowOp;     
+            auto colOp     = gemmOps.colOp;     
+            auto loopOp    = gemmOps.loopOp;    
+            auto loadAOp   = gemmOps.loadAOp;   
+            auto loadBOp   = gemmOps.loadBOp;  
+            auto mulOp     = gemmOps.mulOp;     
+            auto addOp     = gemmOps.addOp;     
+            auto storeOp   = gemmOps.storeOp;   
 
             //mathch
-            /** starting point checking */
+            /** rowbase and colbase checking */
             if(rowBaseOp.getAffineMap() != expectedFormula || rowBaseOp.getNumOperands() != 1 || rowBaseOp.getOperand(0) != blocksId.x)
             {
                 flag = false;
@@ -2159,18 +2159,23 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            /**  */
+            /** row and col checking */
+            if(rowOp.getOperand(0) != threadsId.y  || rowOp.getOperand(1) != rowBaseOp.getResult() || rowOp.getNumOperands() != 2)
+            {
+                flag = false;
+                return flag;
+            }
 
+            if(colOp.getOperand(0) != threadsId.x  || colOp.getOperand(1) != colBaseOp.getResult() || colOp.getNumOperands() != 2)
+            {
+                flag = false;
+                return flag;
+            }
+
+            /** for loop head checking */
             
 
 
-
-            
-            
-            
-            
-
-            
             return true;
         }
 
