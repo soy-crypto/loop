@@ -2049,8 +2049,8 @@ namespace toy_shared_tile
             arith::AddIOp colOp;
 
             scf::ForOp loopOp;
-            memref::LoadOp loadOpA;
-            memref::LoadOp loadOpB;
+            memref::LoadOp loadAOp;
+            memref::LoadOp loadBOp;
             arith::MulFOp mulOp;
             arith::AddFOp addOp;
 
@@ -2064,29 +2064,113 @@ namespace toy_shared_tile
             {
                 return GEMMOps{};
             }
-            
+
             //init
             struct GEMMOps gemmOps;
 
-            //get gemm ops
-            gemmOps.launchOp = launch;
+            //collect ps
             SmallVector<Operation*> ops;
             for(Operation& op : launch.getBody().front().without_terminator())
             {
                 ops.push_back(&op);
-            }
+                auto loopOp = dyn_cast<scf::ForOp>(&op);
+                if(loopOp)
+                {
+                    for(Operation& innerOp : loopOp.getBody()->without_terminator())
+                    {
+                        ops.push_back(&innerOp);
+                    }//
 
-            if(ops.size() != 6)
+                }
+
+            }//for
+
+            if(ops.size() != 10)
             {
                 return GEMMOps{};
             }
 
+            //update gemmOps
+            gemmOps.launchOp  = launch;
+            gemmOps.rowBaseOp = dyn_cast<affine::AffineApplyOp>(ops[0]);
+            gemmOps.colBaseOp = dyn_cast<affine::AffineApplyOp>(ops[1]);
+            gemmOps.rowOp     = dyn_cast<arith::AddIOp>(ops[2]);
+            gemmOps.colOp     = dyn_cast<arith::AddIOp>(ops[3]);
+            gemmOps.loopOp    = dyn_cast<scf::ForOp>(ops[4]);
+            gemmOps.loadAOp   = dyn_cast<memref::LoadOp>(ops[5]);
+            gemmOps.loadBOp   = dyn_cast<memref::LoadOp>(ops[6]);
+            gemmOps.mulOp     = dyn_cast<arith::MulFOp>(ops[7]);
+            gemmOps.addOp     = dyn_cast<arith::AddFOp>(ops[8]);
+            gemmOps.storeOp   = dyn_cast<memref::StoreOp>(ops[9]);
+
+            //validate gemmOps
+            if(!gemmOps.launchOp || !gemmOps.rowBaseOp || !gemmOps.colBaseOp || 
+               !gemmOps.rowOp || !gemmOps.colOp || !gemmOps.loopOp || 
+               !gemmOps.loadAOp || !gemmOps.loadBOp ||
+               !gemmOps.mulOp || !gemmOps.addOp ||
+               !gemmOps.storeOp)
+            {
+                return GEMMOps{};
+            }
+        
             //return
             return gemmOps;        
         }
 
         bool isMatchedGEMMOps(struct GEMMOps gemmOps) const
         {
+            //validity
+            if(!gemmOps.launchOp)
+            {
+                return false;
+            }
+            
+            //init
+            bool flag = true;
+            auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
+            auto blocksId = gemmOps.launchOp.getBlockIds();
+            auto threadsId = gemmOps.launchOp.getThreadIds();
+            auto gridSize = gemmOps.launchOp.getGridSizeOperandValues();
+            auto blockSize = gemmOps.launchOp.getBlockSizeOperandValues();
+
+            auto launchOp = gemmOps.launchOp;
+            auto rowBaseOp = gemmOps.rowBaseOp;
+            auto colBaseOp = gemmOps.colBaseOp;
+            auto rowOp = gemmOps.rowOp;     
+            auto colOp = gemmOps.colOp;     
+            auto loopOp = gemmOps.loopOp;    
+            auto loadAOp = gemmOps.loadAOp;   
+            auto loadBOp = gemmOps.loadBOp;  
+            auto mulOp = gemmOps.mulOp;     
+            auto addOp = gemmOps.addOp;     
+            auto storeOp = gemmOps.storeOp;   
+
+            //mathch
+            /** starting point checking */
+            if(rowBaseOp.getAffineMap() != expectedFormula || rowBaseOp.getNumOperands() != 1 || rowBaseOp.getOperand(0) != blocksId.x)
+            {
+                flag = false;
+                return flag;
+            }
+
+            if(colBaseOp.getAffineMap() != expectedFormula || colBaseOp.getNumOperands() != 1 || colBaseOp.getOperand(0) != blocksId.y)
+            {
+                flag = false;
+                return flag;
+            }
+
+            /**  */
+
+            
+
+
+
+            
+            
+            
+            
+
+            
             return true;
         }
 
