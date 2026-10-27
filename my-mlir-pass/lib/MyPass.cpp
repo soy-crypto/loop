@@ -2104,8 +2104,10 @@ namespace toy_shared_tile
             gemmOps.storeOp   = dyn_cast<memref::StoreOp>(ops[9]);
 
             //validate gemmOps
-            if(!gemmOps.launchOp || !gemmOps.rowBaseOp || !gemmOps.colBaseOp || 
-               !gemmOps.rowOp || !gemmOps.colOp || !gemmOps.loopOp || 
+            if(!gemmOps.launchOp || 
+               !gemmOps.rowBaseOp || !gemmOps.colBaseOp || 
+               !gemmOps.rowOp || !gemmOps.colOp || 
+               !gemmOps.loopOp || 
                !gemmOps.loadAOp || !gemmOps.loadBOp ||
                !gemmOps.mulOp || !gemmOps.addOp ||
                !gemmOps.storeOp)
