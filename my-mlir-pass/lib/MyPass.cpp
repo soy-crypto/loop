@@ -2032,7 +2032,6 @@ namespace
 
 }//namespace
 
-
 namespace toy_shared_tile
 {   
     //pattern
