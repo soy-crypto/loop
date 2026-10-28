@@ -2190,6 +2190,7 @@ namespace toy_shared_tile
             Value lower = loopOp.getLowerBound();
             Value step = loopOp.getStep();
             auto initArgs = loopOp.getInitArgs();
+            auto curSum = loopOp.getRegionIterArgs()[0];
             if(initArgs.size() != 1 || !matchPattern(initArgs[0], m_AnyZeroFloat()))
             {
                 flag = false;
@@ -2203,8 +2204,14 @@ namespace toy_shared_tile
             }
 
             /** inside Ops checking */
-            Value loadABuff = loadAOp.getMemref(), aI = loadAOp.getIndices()[0], aJ = loadBOp.getIndicies()[1], loadAResult = loadAOp.getResult();
-            Value loadBBuff = loadBOp.getMemref(), bI = loadBOp.getIndices()[0], bJ = loadBOp.getIndicies()[1], loadBResult = loadBOp.getResult();
+            if(loadAOp.getIndices().size() != 2 || loadBOp.getIndices().size() != 2)
+            {
+                flag = false;
+                return flag;
+            }
+
+            Value loadABuff = loadAOp.getMemref(), aI = loadAOp.getIndices()[0], aJ = loadAOp.getIndices()[1], loadAResult = loadAOp.getResult();
+            Value loadBBuff = loadBOp.getMemref(), bI = loadBOp.getIndices()[0], bJ = loadBOp.getIndices()[1], loadBResult = loadBOp.getResult();
             if(loadABuff != A || aI != rowOp.getResult() || aJ != k)
             {
                 flag = false;
@@ -2225,7 +2232,7 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            if(addLhs != mulResult || addRhs != initArgs[0])
+            if(addLhs != mulResult || addRhs != curSum)
             {
                 flag = false;
                 return flag;
@@ -2238,8 +2245,8 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            Value storeOpLhs = storeOp.getValue(), storeOpBuff = storeOp.getMemref(), cI = rowOp.getResult, cJ = colOp.getResult;
-            if(sotreOpLhs != mulResult || storeOpBuff != C || cI != rowOp.getResult || cJ != colOp.getResult)
+            Value storeOpLhs = storeOp.getValue(), storeOpBuff = storeOp.getMemref(), cI = storeOp.getResult(), cJ = storeOp.getResult();
+            if(sotreOpLhs != loopOp.getResult(0) || storeOpBuff != C || cI != rowOp.getResult || cJ != colOp.getResult)
             {
                 flag = false;
                 return flag;
