@@ -2174,10 +2174,21 @@ namespace toy_shared_tile
             }
 
             /** for loop head checking */
-            
+            Value k = loopOp.getInductionVar();
+            Value upper = loopOp.getUpperBound();
+            Value lower = loopOp.getLowerBound();
+            Value step = loopOp.getStep();
+            auto initArgs = loopOp.getInitArgs();
+            if(initArgs.size() != 1 || !matchPattern(initArgs[0], m_AnyZeroFloat()))
+            {
+                flag = false;
+                return flag;
+            }
+
+            if(upper.getIntValue() != )
 
 
-            return true;
+            return flag;
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
