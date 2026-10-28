@@ -2129,6 +2129,8 @@ namespace toy_shared_tile
             //init
             bool flag = true;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
+
+            /** funcOp */
             auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
             if(!funcOp || funcOp.getNumArguments() != 3)
             {
@@ -2140,12 +2142,12 @@ namespace toy_shared_tile
             Value B = funcOp.getArgument(1);
             Value C = funcOp.getArgument(2);
 
-            auto blocksId        = gemmOps.launchOp.getBlockIds();
-            auto threadsId       = gemmOps.launchOp.getThreadIds();
-            auto gridSize        = gemmOps.launchOp.getGridSizeOperandValues();
-            auto blockSize       = gemmOps.launchOp.getBlockSizeOperandValues();
-
-            auto launchOp  = gemmOps.launchOp;
+            /** launchOp */
+            auto launchOp   = gemmOps.launchOp;
+            auto blocksId   = gemmOps.launchOp.getBlockIds();
+            auto threadsId  = gemmOps.launchOp.getThreadIds();
+            auto gridSize   = gemmOps.launchOp.getGridSizeOperandValues();
+            auto blockSize  = gemmOps.launchOp.getBlockSizeOperandValues();
             auto rowBaseOp = gemmOps.rowBaseOp;
             auto colBaseOp = gemmOps.colBaseOp;
             auto rowOp     = gemmOps.rowOp;     
@@ -2158,6 +2160,14 @@ namespace toy_shared_tile
             auto storeOp   = gemmOps.storeOp;   
 
             //mathch
+            /** grid size and block size checking */
+            if(!isConstantInt(gridSize.x, 8)  || !isConstantInt(gridSize.y, 8) || !isConstantInt(gridSize.z, 1) ||
+               !isConstantInt(blockSize.x, 8) || !isConstantInt(blockSize.y, 8) || !isConstntInt(blockSize.z, 8))
+            {
+                flag = false;
+                return flag;    
+            }
+        
             /** rowbase and colbase checking */
             if(rowBaseOp.getAffineMap() != expectedFormula || rowBaseOp.getNumOperands() != 1 || rowBaseOp.getOperand(0) != blocksId.x)
             {
