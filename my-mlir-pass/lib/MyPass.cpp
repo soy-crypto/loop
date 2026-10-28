@@ -2128,8 +2128,18 @@ namespace toy_shared_tile
             
             //init
             bool flag = true;
-            auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
+            auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>
+            if(!funcOp || funcOp.getNumArgument() != 3)
+            {
+                flag = false;
+                return;
+            }
+
+            Value A = funcOp.getArgument(0);
+            Value B = funcOp.getArgument(1);
+            Value C = funcOp.getArgument(2);
+
             auto blocksId        = gemmOps.launchOp.getBlockIds();
             auto threadsId       = gemmOps.launchOp.getThreadIds();
             auto gridSize        = gemmOps.launchOp.getGridSizeOperandValues();
@@ -2192,9 +2202,43 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            
-            
+            /** inside Ops checking */
+            Value loadABuff = loadAOp.getMemref(), aI = loadAOp.getIndices()[0], aJ = loadBOp.getIndicies()[1], loadAResult = loadAOp.getResult();
+            Value loadBBuff = loadBOp.getMemref(), bI = loadBOp.getIndicies()[0], bJ = loadBOp.getIndicies()[1], loadBResult = loadBOp.getResult();
+            if(loadABuff != A || aI != rowOp.getResult() || bJ != k)
+            {
+                flag = false;
+                return flag;
+            }
 
+            if(loadBBuff != B || bI != k || bJ != colOp.getResult())
+            {
+                flag = false;
+                return flag;
+            }
+
+            Value mulLhs = mulOp.getLhs(), mulRhs = mulOp.getRhs(), mulResult = mulOp.getResult();
+            Value addLhs = addOp.getLhs(), addRhs = addOp.getRhs(), addResult = addOp.getResult();
+            if(mulLhs != loadAResult || nulRhs != loadBResult)
+            {
+                flag = false;
+                return flag;
+            }
+
+            if(addLhs != mulResult || addRhs != initArgs[0])
+            {
+                flag = false;
+                return flag;
+            }
+
+            auto yieldOp = dyn_cast<scf::YieldOp>(loopOp.getBody()->without_terminator());
+            if(!yieldOp || yieldOp.getNumOperands() != 1 || yieldOp.getOperand(0) != addResult)
+            {
+                flag = false;
+                return flag;
+            }
+
+            //return
             return flag;
         }
 
