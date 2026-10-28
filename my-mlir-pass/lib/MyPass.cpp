@@ -2185,7 +2185,7 @@ namespace toy_shared_tile
             }
 
             /** for loop head checking */
-            if(loopOp.getInitArgs().size() != 1 || loadAOp.getIndices().size() != 2 || loadBOp.getIndices().size() != 2 || mulOp.getNumOperands() != 2 || addOp.getNumOperandsd() != 2 || storeOp.getNumOperands() != 4 || 
+            if(loopOp.getInitArgs().size() != 1 || loadAOp.getIndices().size() != 2 || loadBOp.getIndices().size() != 2 || mulOp.getNumOperands() != 2 || addOp.getNumOperands() != 2 || storeOp.getNumOperands() != 4 || 
                storeOp.getIndices().size() != 2)
             {
                 flag = false;
