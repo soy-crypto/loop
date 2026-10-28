@@ -2128,6 +2128,7 @@ namespace toy_shared_tile
             
             //init
             bool flag = true;
+            auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
             auto blocksId        = gemmOps.launchOp.getBlockIds();
             auto threadsId       = gemmOps.launchOp.getThreadIds();
@@ -2185,8 +2186,14 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            if(upper.getIntValue() != )
+            if(!isConstantInt(upper, 0) || !isConstantInt(lower, 64) || !isConstantInt(step, 1))
+            {
+                flag = false;
+                return flag;
+            }
 
+            
+            
 
             return flag;
         }
