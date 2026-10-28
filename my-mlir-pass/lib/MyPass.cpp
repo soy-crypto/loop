@@ -2238,6 +2238,13 @@ namespace toy_shared_tile
                 return flag;
             }
 
+            Value storeOpLhs = storeOp.getValue(), storeOpBuff = storeOp.getMemref(), cI = rowOp.getResult, cJ = colOp.getResult;
+            if(sotreOpLhs != mulResult || storeOpBuff != C || cI != rowOp.getResult || cJ != colOp.getResult)
+            {
+                flag = false;
+                return flag;
+            }
+
             //return
             return flag;
         }
