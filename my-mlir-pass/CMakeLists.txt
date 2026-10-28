@@ -58,7 +58,12 @@ target_link_libraries(my-opt PRIVATE
   MLIRRegisterAllDialects
   MLIRRegisterAllExtensions
   MLIRRegisterAllPasses
+  MLIRRegisterAllDialects
+  MLIRRegisterAllExtensions
+  MLIRRegisterAllPasses
   MLIRGPUToLLVMIRTranslation
 )
+
+target_compile_options(my-opt PRIVATE -fno-rtti)
 
 target_compile_options(my-opt PRIVATE -fno-rtti)
