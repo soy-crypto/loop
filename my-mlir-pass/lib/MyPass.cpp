@@ -2185,13 +2185,20 @@ namespace toy_shared_tile
             }
 
             /** for loop head checking */
+            if(loopOp.getInitArgs().size() != 1 || loadAOp.getIndices().size() != 2 || loadBOp.getIndices().size() != 2 || mulOp.getNumOperands() != 2 || addOp.getNumOperandsd() != 2 || storeOp.getNumOperands() != 4 || 
+               storeOp.getIndices().size() != 2)
+            {
+                flag = false;
+                return flag;
+            }
+
             Value k = loopOp.getInductionVar();
             Value upper = loopOp.getUpperBound();
             Value lower = loopOp.getLowerBound();
             Value step = loopOp.getStep();
             auto initArgs = loopOp.getInitArgs();
             auto curSum = loopOp.getRegionIterArgs()[0];
-            if(initArgs.size() != 1 || !matchPattern(initArgs[0], m_AnyZeroFloat()))
+            if(!matchPattern(initArgs[0], m_AnyZeroFloat()))
             {
                 flag = false;
                 return flag;
@@ -2204,12 +2211,6 @@ namespace toy_shared_tile
             }
 
             /** inside Ops checking */
-            if(loadAOp.getIndices().size() != 2 || loadBOp.getIndices().size() != 2)
-            {
-                flag = false;
-                return flag;
-            }
-
             Value loadABuff = loadAOp.getMemref(), aI = loadAOp.getIndices()[0], aJ = loadAOp.getIndices()[1], loadAResult = loadAOp.getResult();
             Value loadBBuff = loadBOp.getMemref(), bI = loadBOp.getIndices()[0], bJ = loadBOp.getIndices()[1], loadBResult = loadBOp.getResult();
             if(loadABuff != A || aI != rowOp.getResult() || aJ != k)
@@ -2245,8 +2246,8 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            Value storeOpLhs = storeOp.getValue(), storeOpBuff = storeOp.getMemref(), cI = storeOp.getResult(), cJ = storeOp.getResult();
-            if(sotreOpLhs != loopOp.getResult(0) || storeOpBuff != C || cI != rowOp.getResult || cJ != colOp.getResult)
+            Value storeOpLhs = storeOp.getValue(), storeOpBuff = storeOp.getMemref(), cI = storeOp.getIndices()[0], cJ = storeOp.getIndices()[1];
+            if(storeOpLhs != loopOp.getResult(0) || storeOpBuff != C || cI != rowOp.getResult() || cJ != colOp.getResult())
             {
                 flag = false;
                 return flag;
@@ -2255,6 +2256,7 @@ namespace toy_shared_tile
             //return
             return flag;
         }
+
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
         {
