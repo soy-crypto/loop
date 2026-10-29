@@ -2282,17 +2282,39 @@ namespace toy_shared_tile
 
         void rewriteGEMM(GEMMOps gemmOps, PatternRewriter& rewriter)
         {
-            //get
-            auto launch = gemmOps.launchOp;
-            auto loc = launch.getLoc();
+            //get all required ops
+            auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
+            Value A = funcOp.getArgument(0);
+            Value B = funcOp.getArgument(1);
+            Value C = funcOp.getArgument(2);
+
+            auto launchOp   = gemmOps.launchOp;
+            auto loc        = launchOp.getLoc();
+            auto blocksId   = gemmOps.launchOp.getBlockIds();
+            auto threadsId  = gemmOps.launchOp.getThreadIds();
+            auto gridSize   = gemmOps.launchOp.getGridSizeOperandValues();
+            auto blockSize  = gemmOps.launchOp.getBlockSizeOperandValues();
+            auto rowBaseOp  = gemmOps.rowBaseOp;
+            auto colBaseOp  = gemmOps.colBaseOp;
+            auto rowOp      = gemmOps.rowOp;     
+            auto colOp      = gemmOps.colOp;     
+            auto loopOp     = gemmOps.loopOp;    
+            auto loadAOp    = gemmOps.loadAOp;   
+            auto loadBOp    = gemmOps.loadBOp;  
+            auto mulOp      = gemmOps.mulOp;     
+            auto addOp      = gemmOps.addOp;     
+            auto storeOp    = gemmOps.storeOp;   
 
             //create shared memory
             auto sharedSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
             auto sharedType = MemRefType::get({8, 8}, rewriter.getF32Type(), MemRefLayoutAttrInterface{}, sharedSpace);
             Value As, Bs;
-            rewriter.modifyOpInPlace(launch, [&]{ As = launch.addWorkgroupAttribution(sharedType, loc); Bs = launch.addWorkgroupAttribution(sharedType, loc); } );
+            rewriter.modifyOpInPlace(launch, [&]{ As = launchOp.addWorkgroupAttribution(sharedType, loc); Bs = launchOp.addWorkgroupAttribution(sharedType, loc); } );
 
-            //
+            //get all the ops in the rewrite
+           
+
+            
             
         }
 
