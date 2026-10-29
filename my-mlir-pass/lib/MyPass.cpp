@@ -2318,13 +2318,23 @@ namespace toy_shared_tile
             Value lower = loopOp.getLowerBound(), upper = loopOp.getUpperBound();
             Value tileSize = blockSize.x;
             Value initialSum = loopOp.getInitArgs()[0];
+
             auto outerLoop = rewriter.create<scf::ForOp>(loc, lower, upper, tileSize, ValueRange{initialSum});
 
             /** create outer loop body */
             rewriter.setInsertionPointToStart(outerLoop.getBody());
+            Value kB  = outerLoop.getInductionVar();
+            Value tx  = threadsId.x, ty = threadsId.y;
+            Value row = rowOp.getResult(), col = colOp.getResult();
 
-            Value tx = threadsId.x, ty = threadsId.y;
-            
+            Value aK = rewriter.create<arith::AddIOp>(loc, kB, tx).getResult();
+            Value bK = rewriter.create<arith::AddIOp>(loc, kB, ty).getResult();
+            Value a  = rewriter.create<memref::LoadOp>(loc, A, ValueRange{row, aK}).getResult();
+            Value b  = rewriter.create<memref::LoadOp>(loc, B, ValueRange{bK, col}).getResult();
+            rewriter.create<memref::LoadOp>(loc, a, As, ValueRange{ty, tx});
+            rewriter.create<memref::LoadOp>(loc, b, Bs, ValueRange{ty, tx});
+            rewriter.create<gpu::BarrierOp>(loc);
+
 
         }
 
