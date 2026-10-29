@@ -2129,6 +2129,7 @@ namespace toy_shared_tile
             //init
             bool flag = true;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
+            auto expectedType = MemRefType::get({64, 64, Float32Type::get(launchOp.getContext())});
 
             /** funcOp */
             auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
@@ -2141,33 +2142,44 @@ namespace toy_shared_tile
             Value A = funcOp.getArgument(0);
             Value B = funcOp.getArgument(1);
             Value C = funcOp.getArgument(2);
+            if(A.getType() != expectedType() || B.getType() != expectedType() || C.getType() != expectedType())
+            {
+                flag = false;
+                return flag;
+            }
 
+            if(!funcOp->hasAttr("toy.accumulator_safe"))
+            {
+                flag = false;
+                return flag;
+            }
+            
             /** launchOp */
             auto launchOp   = gemmOps.launchOp;
             auto blocksId   = gemmOps.launchOp.getBlockIds();
             auto threadsId  = gemmOps.launchOp.getThreadIds();
             auto gridSize   = gemmOps.launchOp.getGridSizeOperandValues();
             auto blockSize  = gemmOps.launchOp.getBlockSizeOperandValues();
-            auto rowBaseOp = gemmOps.rowBaseOp;
-            auto colBaseOp = gemmOps.colBaseOp;
-            auto rowOp     = gemmOps.rowOp;     
-            auto colOp     = gemmOps.colOp;     
-            auto loopOp    = gemmOps.loopOp;    
-            auto loadAOp   = gemmOps.loadAOp;   
-            auto loadBOp   = gemmOps.loadBOp;  
-            auto mulOp     = gemmOps.mulOp;     
-            auto addOp     = gemmOps.addOp;     
-            auto storeOp   = gemmOps.storeOp;   
+            auto rowBaseOp  = gemmOps.rowBaseOp;
+            auto colBaseOp  = gemmOps.colBaseOp;
+            auto rowOp      = gemmOps.rowOp;     
+            auto colOp      = gemmOps.colOp;     
+            auto loopOp     = gemmOps.loopOp;    
+            auto loadAOp    = gemmOps.loadAOp;   
+            auto loadBOp    = gemmOps.loadBOp;  
+            auto mulOp      = gemmOps.mulOp;     
+            auto addOp      = gemmOps.addOp;     
+            auto storeOp    = gemmOps.storeOp;   
 
             //mathch
             /** grid size and block size checking */
-            if(!isConstantInt(gridSize.x, 8)  || !isConstantInt(gridSize.y, 8) || !isConstantInt(gridSize.z, 1) ||
+            if(!isConstantInt(gridSize.x, 8)  || !isConstantInt(gridSize.y, 8)  || !isConstantInt(gridSize.z, 1) ||
                !isConstantInt(blockSize.x, 8) || !isConstantInt(blockSize.y, 8) || !isConstntInt(blockSize.z, 8))
             {
                 flag = false;
                 return flag;    
             }
-        
+            
             /** rowbase and colbase checking */
             if(rowBaseOp.getAffineMap() != expectedFormula || rowBaseOp.getNumOperands() != 1 || rowBaseOp.getOperand(0) != blocksId.x)
             {
