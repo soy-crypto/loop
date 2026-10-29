@@ -2282,14 +2282,17 @@ namespace toy_shared_tile
 
         void rewriteGEMM(GEMMOps gemmOps, PatternRewriter& rewriter)
         {
-            //
+            //get
             auto launch = gemmOps.launchOp;
             auto loc = launch.getLoc();
 
             //create shared memory
-            auto shareSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
-            auto shareType = MemRefType::get({8, 8}, rewriter.getF32Type(), MemRefLayoutAttrInterface{}, sharedSpace);
+            auto sharedSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
+            auto sharedType = MemRefType::get({8, 8}, rewriter.getF32Type(), MemRefLayoutAttrInterface{}, sharedSpace);
+            Value As, Bs;
+            rewriter.modifyOpInPlace(launch, [&]{ As = launch.addWorkgroupAttribution(sharedType, loc); Bs = launch.addWorkgroupAttribution(sharedType, loc); } );
 
+            //
             
         }
 
