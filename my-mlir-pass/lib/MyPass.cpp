@@ -2104,12 +2104,12 @@ namespace toy_shared_tile
             gemmOps.storeOp   = dyn_cast<memref::StoreOp>(ops[9]);
 
             //validate gemmOps
-            if(!gemmOps.launchOp || 
+            if(!gemmOps.launchOp  || 
                !gemmOps.rowBaseOp || !gemmOps.colBaseOp || 
-               !gemmOps.rowOp || !gemmOps.colOp || 
-               !gemmOps.loopOp || 
-               !gemmOps.loadAOp || !gemmOps.loadBOp ||
-               !gemmOps.mulOp || !gemmOps.addOp ||
+               !gemmOps.rowOp     || !gemmOps.colOp || 
+               !gemmOps.loopOp    || 
+               !gemmOps.loadAOp   || !gemmOps.loadBOp ||
+               !gemmOps.mulOp     || !gemmOps.addOp ||
                !gemmOps.storeOp)
             {
                 return GEMMOps{};
@@ -2313,6 +2313,12 @@ namespace toy_shared_tile
 
             //rewrite
             /** create outer loop bound */
+            Value lower = loopOp.getLowerBound(), upper = loopOp.getUpperBound();
+            Value tileSize = blockSize.x;
+            Value initialSum = loopOp.getInitArgs()[0];
+
+            rewriter.setInsertionPoint(loopOp);
+            
 
 
         }
