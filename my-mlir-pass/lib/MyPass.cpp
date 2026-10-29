@@ -2328,12 +2328,11 @@ namespace toy_shared_tile
             Value bK = rewriter.create<arith::AddIOp>(loc, kB, ty).getResult();
             Value a  = rewriter.create<memref::LoadOp>(loc, A, ValueRange{row, aK}).getResult();
             Value b  = rewriter.create<memref::LoadOp>(loc, B, ValueRange{bK, col}).getResult();
-            
+
             rewriter.create<memref::LoadOp>(loc, a, As, ValueRange{ty, tx});
             rewriter.create<memref::LoadOp>(loc, b, Bs, ValueRange{ty, tx});
             rewriter.create<gpu::BarrierOp>(loc);
-
-
+            
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
