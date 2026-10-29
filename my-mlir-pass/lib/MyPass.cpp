@@ -2312,14 +2312,19 @@ namespace toy_shared_tile
             rewriter.modifyOpInPlace(launchOp, [&]{ As = launchOp.addWorkgroupAttribution(sharedType, loc); Bs = launchOp.addWorkgroupAttribution(sharedType, loc); } );
 
             //rewrite
-            /** create outer loop bound */
+            /** create outer loop head  */
+            rewriter.setInsertionPoint(loopOp);
+
             Value lower = loopOp.getLowerBound(), upper = loopOp.getUpperBound();
             Value tileSize = blockSize.x;
             Value initialSum = loopOp.getInitArgs()[0];
+            auto outerLoop = rewriter.create<scf::ForOp>(loc, lower, upper, tileSize, ValueRange{initialSum});
 
-            rewriter.setInsertionPoint(loopOp);
+            /** create outer loop body */
+            rewriter.setInsertionPointToStart(outerLoop.getBody());
+
+            Value tx = threadsId.x, ty = threadsId.y;
             
-
 
         }
 
