@@ -2129,7 +2129,7 @@ namespace toy_shared_tile
             //init
             bool flag = true;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
-            auto expectedType = MemRefType::get({64, 64, Float32Type::get(launchOp.getContext())});
+            auto expectedType = MemRefType::get({64, 64, Float32Type::get(gemmOps.launchOp.getContext())});
 
             /** funcOp */
             auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
@@ -2142,7 +2142,7 @@ namespace toy_shared_tile
             Value A = funcOp.getArgument(0);
             Value B = funcOp.getArgument(1);
             Value C = funcOp.getArgument(2);
-            if(A.getType() != expectedType() || B.getType() != expectedType() || C.getType() != expectedType())
+            if(A.getType() != expectedType || B.getType() != expectedType || C.getType() != expectedType)
             {
                 flag = false;
                 return flag;
@@ -2153,7 +2153,7 @@ namespace toy_shared_tile
                 flag = false;
                 return flag;
             }
-            
+
             /** launchOp */
             auto launchOp   = gemmOps.launchOp;
             auto blocksId   = gemmOps.launchOp.getBlockIds();
@@ -2174,7 +2174,7 @@ namespace toy_shared_tile
             //mathch
             /** grid size and block size checking */
             if(!isConstantInt(gridSize.x, 8)  || !isConstantInt(gridSize.y, 8)  || !isConstantInt(gridSize.z, 1) ||
-               !isConstantInt(blockSize.x, 8) || !isConstantInt(blockSize.y, 8) || !isConstntInt(blockSize.z, 8))
+               !isConstantInt(blockSize.x, 8) || !isConstantInt(blockSize.y, 8) || !isConstantInt(blockSize.z, 8))
             {
                 flag = false;
                 return flag;    
