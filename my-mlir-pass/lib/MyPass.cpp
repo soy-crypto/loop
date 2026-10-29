@@ -2309,12 +2309,9 @@ namespace toy_shared_tile
             auto sharedSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
             auto sharedType = MemRefType::get({8, 8}, rewriter.getF32Type(), MemRefLayoutAttrInterface{}, sharedSpace);
             Value As, Bs;
-            rewriter.modifyOpInPlace(launch, [&]{ As = launchOp.addWorkgroupAttribution(sharedType, loc); Bs = launchOp.addWorkgroupAttribution(sharedType, loc); } );
+            rewriter.modifyOpInPlace(launchOp, [&]{ As = launchOp.addWorkgroupAttribution(sharedType, loc); Bs = launchOp.addWorkgroupAttribution(sharedType, loc); } );
 
             //get all the ops in the rewrite
-           
-
-            
             
         }
 
