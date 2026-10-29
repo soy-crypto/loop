@@ -2313,7 +2313,9 @@ namespace toy_shared_tile
 
             //rewrite
             /** create outer loop head  */
-            rewriter.setInsertionPoint(loopOp);Value lower = loopOp.getLowerBound(), upper = loopOp.getUpperBound();
+            rewriter.setInsertionPoint(loopOp);
+            Value lower = loopOp.getLowerBound();
+            Value upper = loopOp.getUpperBound();
             Value tileSize = blockSize.x;
             Value initialSum = loopOp.getInitArgs()[0];
 
@@ -2332,7 +2334,13 @@ namespace toy_shared_tile
             rewriter.create<memref::LoadOp>(loc, a, As, ValueRange{ty, tx});
             rewriter.create<memref::LoadOp>(loc, b, Bs, ValueRange{ty, tx});
             rewriter.create<gpu::BarrierOp>(loc);
+
+            /** create inner loop */
+            Value llower = loopOp.getLowerBound();
+            Value uupper = blockSize.x;
+            Value stepSize = loopOp.getUpperBound();
             
+ 
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
