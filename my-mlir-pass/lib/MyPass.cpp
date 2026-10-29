@@ -2323,13 +2323,13 @@ namespace toy_shared_tile
 
             /** create outer loop body */
             rewriter.setInsertionPointToStart(outerLoop.getBody());
-            Value kB  = outerLoop.getInductionVar();
+            Value k  = outerLoop.getInductionVar();
             Value tx  = threadsId.x, ty = threadsId.y;
             Value row = rowOp.getResult(), col = colOp.getResult();
-            Value aK = rewriter.create<arith::AddIOp>(loc, kB, tx).getResult();
-            Value bK = rewriter.create<arith::AddIOp>(loc, kB, ty).getResult();
-            Value a  = rewriter.create<memref::LoadOp>(loc, A, ValueRange{row, aK}).getResult();
-            Value b  = rewriter.create<memref::LoadOp>(loc, B, ValueRange{bK, col}).getResult();
+            Value ak = rewriter.create<arith::AddIOp>(loc, k, tx).getResult();
+            Value bk = rewriter.create<arith::AddIOp>(loc, k, ty).getResult();
+            Value a  = rewriter.create<memref::LoadOp>(loc, A, ValueRange{row, ak}).getResult();
+            Value b  = rewriter.create<memref::LoadOp>(loc, B, ValueRange{bk, col}).getResult();
 
             rewriter.create<memref::LoadOp>(loc, a, As, ValueRange{ty, tx});
             rewriter.create<memref::LoadOp>(loc, b, Bs, ValueRange{ty, tx});
@@ -2338,11 +2338,25 @@ namespace toy_shared_tile
             /** create inner loop */
             Value llower = loopOp.getLowerBound();
             Value uupper = blockSize.x;
-            Value stepSize = loopOp.getUpperBound();
+            Value stepSize = blockSize.z;
             
-        
+            innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{initialSum});
+            
+            /** write inner loop body */
+            rewriter.setInsertionPointToStart(innerLoop.getBody());
+            Value kk = innerLoop.getInductionVar();
+            Value prevSum = innerLoop.getInitArguments(0).getResult();
+            Value a = rewriter.create<memref::LoadOp>(loc, As, ValueRange{ty, k}).getResult();
+            Value b = rewriter.create<memref::LoadOp>(loc, Bs, ValueRange{k, tx}).getResult();
 
- 
+            Value mulAB = rewriter.create<arith::mulIOp>(loc, a, b).getResult();
+            Value curSum = rewriter.create<arith::addIOp>(loc, mulAB, prevSum);
+            rewriter.create<yield::YieldOp>(curSum);
+
+            /** update C[row][col] */
+            rewriter.setInsertionPoint();
+            
+            
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
