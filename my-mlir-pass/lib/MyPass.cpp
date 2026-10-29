@@ -31,6 +31,7 @@
 #include "mlir/IR/IRMapping.h"
 #include "llvm/ADT/STLExtras.h"
 #include "mlir/Transforms/WalkPatternRewriteDriver.h"
+#include "mlir/Dialect/Utils/StaticValueUtils.h"
 
 
 using namespace mlir;
@@ -2129,7 +2130,7 @@ namespace toy_shared_tile
             //init
             bool flag = true;
             auto expectedFormula = AffineMap::get(0, 1, getAffineSymbolExpr(0, gemmOps.launchOp.getContext()) * 8);
-            auto expectedType = MemRefType::get({64, 64, Float32Type::get(gemmOps.launchOp.getContext())});
+            auto expectedType = MemRefType::get({64, 64}, Float32Type::get(gemmOps.launchOp.getContext()));
 
             /** funcOp */
             auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
@@ -2173,8 +2174,8 @@ namespace toy_shared_tile
 
             //mathch
             /** grid size and block size checking */
-            if(!isConstantInt(gridSize.x, 8)  || !isConstantInt(gridSize.y, 8)  || !isConstantInt(gridSize.z, 1) ||
-               !isConstantInt(blockSize.x, 8) || !isConstantInt(blockSize.y, 8) || !isConstantInt(blockSize.z, 8))
+            if(!isConstantIntValue(gridSize.x, 8)  || !isConstantIntValue(gridSize.y, 8)  || !isConstantIntValue(gridSize.z, 1) ||
+               !isConstantIntValue(blockSize.x, 8) || !isConstantIntValue(blockSize.y, 8) || !isConstantIntValue(blockSize.z, 1))
             {
                 flag = false;
                 return flag;    
@@ -2226,7 +2227,7 @@ namespace toy_shared_tile
                 return flag;
             }
 
-            if(!isConstantInt(lower, 0) || !isConstantInt(upper, 64) || !isConstantInt(step, 1))
+            if(!isConstantIntValue(lower, 0) || !isConstantIntValue(upper, 64) || !isConstantIntValue(step, 1))
             {
                 flag = false;
                 return flag;
