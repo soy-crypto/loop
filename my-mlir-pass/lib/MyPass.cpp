@@ -2280,6 +2280,17 @@ namespace toy_shared_tile
             return flag;
         }
 
+        void rewriteGEMM(GEMMOps gemmOps, PatternRewriter& rewriter)
+        {
+            //
+            auto launch = gemmOps.launchOp;
+            auto loc = launch.getLoc();
+
+            //create shared memory
+            auto shareSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
+
+            
+        }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
         {
