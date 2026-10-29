@@ -2311,8 +2311,10 @@ namespace toy_shared_tile
             Value As, Bs;
             rewriter.modifyOpInPlace(launchOp, [&]{ As = launchOp.addWorkgroupAttribution(sharedType, loc); Bs = launchOp.addWorkgroupAttribution(sharedType, loc); } );
 
-            //get all the ops in the rewrite
-            
+            //rewrite
+            /** create outer loop bound */
+
+
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
