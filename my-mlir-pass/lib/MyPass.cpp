@@ -2288,6 +2288,7 @@ namespace toy_shared_tile
 
             //create shared memory
             auto shareSpace = gpu::AddressSpaceAttr::get(rewriter.getContext(), gpu::AddressSpace::Workgroup);
+            auto shareType = MemRefType::get({8, 8}, rewriter.getF32Type(), MemRefLayoutAttrInterface{}, sharedSpace);
 
             
         }
