@@ -2351,12 +2351,15 @@ namespace toy_shared_tile
 
             Value mulAB = rewriter.create<arith::mulIOp>(loc, a, b).getResult();
             Value curSum = rewriter.create<arith::addIOp>(loc, mulAB, prevSum);
-            rewriter.create<yield::YieldOp>(curSum);
+            rewriter.create<scf::YieldOp>(loc, curSum);
 
             /** update C[row][col] */
-            rewriter.setInsertionPoint();
-            
-            
+            rewriter.setInsertionPointAfter(innerLoop);
+            rewriter.create<gpu::BarrierOp>(loc);
+
+            /** */
+            rewriter.create<memref::LoadOp>(loc, innerLoop.getResult(), C, ValueRange{row, col});
+        
         }
 
         void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
