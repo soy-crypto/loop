@@ -2280,7 +2280,7 @@ namespace toy_shared_tile
             return flag;
         }
 
-        void rewriteGEMM(GEMMOps gemmOps, PatternRewriter& rewriter)
+        void rewriteGEMM(GEMMOps gemmOps, PatternRewriter& rewriter) const
         {
             //get all required ops
             auto funcOp = gemmOps.launchOp.getOperation()->getParentOfType<func::FuncOp>();
@@ -2338,12 +2338,12 @@ namespace toy_shared_tile
             Value llower   = loopOp.getLowerBound();
             Value uupper   = blockSize.x;
             Value stepSize = blockSize.z;
-            innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{outerLoop.getInitArguments()[0]});
+            auto innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{outerLoop.getRegionIterArgs()[0]});
             
             /** compute innerLoop sum */ 
             rewriter.setInsertionPointToStart(innerLoop.getBody());
             Value kk = innerLoop.getInductionVar();
-            Value prevInnerSum = innerLoop.getInitArguments()[0];
+            Value prevInnerSum = innerLoop.getRegionIterArgs()[0];
             Value aa = rewriter.create<memref::LoadOp>(loc, As, ValueRange{ty, kk}).getResult();
             Value bb = rewriter.create<memref::LoadOp>(loc, Bs, ValueRange{kk, tx}).getResult();
             Value mulAB  = rewriter.create<arith::MulFOp>(loc, aa, bb).getResult();
@@ -2364,11 +2364,6 @@ namespace toy_shared_tile
             rewriter.replaceOp(loopOp, outerLoop.getResults());
             
             //return
-            return;
-        }
-
-        void rewriteGEMM(struct GEMMOps gemmOps, PatternRewriter& rewriter) const
-        {
             return;
         }
 
