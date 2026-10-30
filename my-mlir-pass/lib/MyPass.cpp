@@ -2338,30 +2338,30 @@ namespace toy_shared_tile
             Value llower   = loopOp.getLowerBound();
             Value uupper   = blockSize.x;
             Value stepSize = blockSize.z;
-            innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{outerLoop.getInitArguments(0).getResult()});
+            innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{outerLoop.getInitArguments()[0]});
             
             /** compute innerLoop sum */ 
             rewriter.setInsertionPointToStart(innerLoop.getBody());
             Value kk = innerLoop.getInductionVar();
-            Value prevInnerSum = innerLoop.getInitArguments(0).getResult();
-            Value a = rewriter.create<memref::LoadOp>(loc, As, ValueRange{ty, kk}).getResult();
-            Value b = rewriter.create<memref::LoadOp>(loc, Bs, ValueRange{kk, tx}).getResult();
-            Value mulAB  = rewriter.create<arith::mulFOp>(loc, a, b).getResult();
-            Value curInnerSum = rewriter.create<arith::addFOp>(loc, mulAB, prevInnerSum);
+            Value prevInnerSum = innerLoop.getInitArguments()[0];
+            Value aa = rewriter.create<memref::LoadOp>(loc, As, ValueRange{ty, kk}).getResult();
+            Value bb = rewriter.create<memref::LoadOp>(loc, Bs, ValueRange{kk, tx}).getResult();
+            Value mulAB  = rewriter.create<arith::MulFOp>(loc, aa, bb).getResult();
+            Value curInnerSum = rewriter.create<arith::AddFOp>(loc, mulAB, prevInnerSum).getResult();
             rewriter.create<scf::YieldOp>(loc, curInnerSum);
 
             /** computer outerLoop sum */
             rewriter.setInsertionPointAfter(innerLoop);
             rewriter.create<gpu::BarrierOp>(loc);
-            rewriter.create<scf::YieldOp>(loc, innerLoop.getResult());
+            rewriter.create<scf::YieldOp>(loc, innerLoop.getResults());
 
             /** update C[row][col] */
             rewriter.setInsertionPointAfter(outerLoop);
-            rewriter.create<memref::StoreOp>(loc, outerLoop.getInitArguments(0).getResult(), C, ValueRange{row, col});
-            rewriter.ereaseOp(storeOp);
+            rewriter.create<memref::StoreOp>(loc, outerLoop.getResult(0), C, ValueRange{row, col});
+            rewriter.eraseOp(storeOp);
 
             /** remove old loop */
-            rewriter.replaceOp(loopOp.getResult(), outerLoop.getResult());
+            rewriter.replaceOp(loopOp, outerLoop.getResults());
             
             //return
             return;
