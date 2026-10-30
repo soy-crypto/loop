@@ -2323,7 +2323,7 @@ namespace toy_shared_tile
 
             /** create outer loop body */
             rewriter.setInsertionPointToStart(outerLoop.getBody());
-            Value k  = outerLoop.getInductionVar();
+            Value k   = outerLoop.getInductionVar();
             Value tx  = threadsId.x, ty = threadsId.y;
             Value row = rowOp.getResult(), col = colOp.getResult();
             Value ak = rewriter.create<arith::AddIOp>(loc, k, tx).getResult();
@@ -2336,8 +2336,8 @@ namespace toy_shared_tile
             rewriter.create<gpu::BarrierOp>(loc);
 
             /** create inner loop */
-            Value llower = loopOp.getLowerBound();
-            Value uupper = blockSize.x;
+            Value llower   = loopOp.getLowerBound();
+            Value uupper   = blockSize.x;
             Value stepSize = blockSize.z;
             
             innerLoop = rewriter.create<scf::ForOp>(loc, llower, uupper, stepSize, ValueRange{initialSum});
@@ -2349,16 +2349,14 @@ namespace toy_shared_tile
             Value a = rewriter.create<memref::LoadOp>(loc, As, ValueRange{ty, k}).getResult();
             Value b = rewriter.create<memref::LoadOp>(loc, Bs, ValueRange{k, tx}).getResult();
 
-            Value mulAB = rewriter.create<arith::mulIOp>(loc, a, b).getResult();
+            Value mulAB  = rewriter.create<arith::mulIOp>(loc, a, b).getResult();
             Value curSum = rewriter.create<arith::addIOp>(loc, mulAB, prevSum);
             rewriter.create<scf::YieldOp>(loc, curSum);
 
-            /** update C[row][col] */
+            /** update  */
             rewriter.setInsertionPointAfter(innerLoop);
+            rewriter.create<scf::YieldOp>(loc, innerLoop.getResult());
             rewriter.create<gpu::BarrierOp>(loc);
-
-            /** */
-            rewriter.create<memref::LoadOp>(loc, innerLoop.getResult(), C, ValueRange{row, col});
         
         }
 
