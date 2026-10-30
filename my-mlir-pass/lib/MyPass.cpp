@@ -2351,14 +2351,18 @@ namespace toy_shared_tile
             rewriter.create<scf::YieldOp>(loc, curInnerSum);
 
             /** computer outerLoop sum */
-            rewriter.create<gpu::BarrierOp>(loc);
             rewriter.setInsertionPointAfter(innerLoop);
+            rewriter.create<gpu::BarrierOp>(loc);
             rewriter.create<scf::YieldOp>(loc, innerLoop.getResult());
 
             /** update C[row][col] */
             rewriter.setInsertionPointAfter(outerLoop);
             rewriter.create<memref::StoreOp>(loc, outerLoop.getInitArguments(0).getResult(), C, ValueRange{row, col});
+            rewriter.ereaseOp(storeOp);
 
+            /** remove old loop */
+            rewriter.replaceOp(loopOp.getResult(), outerLoop.getResult());
+            
             //return
             return;
         }
