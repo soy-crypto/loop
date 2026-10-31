@@ -2318,7 +2318,6 @@ namespace toy_shared_tile
             Value upper = loopOp.getUpperBound();
             Value tileSize = blockSize.x;
             Value initialSum = loopOp.getInitArgs()[0];
-
             auto outerLoop = rewriter.create<scf::ForOp>(loc, lower, upper, tileSize, ValueRange{initialSum});
 
             /** create outer loop body */
